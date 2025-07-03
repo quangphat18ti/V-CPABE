@@ -192,10 +192,10 @@ func (scheme *CPABEScheme) Encrypt(pk *PublicKey, message *bn256.GT, accessPolic
 	eggAlphaS := new(bn256.GT).ScalarMult(pk.EggAlpha, s)
 	c0 := new(bn256.GT).Add(message, eggAlphaS)
 
-	// Compute C1 = g^s
+	// Compute CommitShareSecretG2 = g^s
 	c1 := new(bn256.G1).ScalarMult(pk.G1Generator, s)
 
-	// Compute C2 = h^s
+	// Compute HashPowShareSecretG1 = h^s
 	c2 := new(bn256.G1).ScalarMult(pk.H, s)
 
 	// For simplicity, create dummy components for access policy

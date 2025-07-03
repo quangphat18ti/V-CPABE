@@ -1,4 +1,4 @@
-package waters11
+package access_policy
 
 import (
 	"fmt"
@@ -11,9 +11,9 @@ func tokenize(input string) []string {
 	return re.FindAllString(input, -1)
 }
 
-func prettyPrint(node *AccessPolicy) {
-	var dfs func(*AccessPolicy, int)
-	dfs = func(n *AccessPolicy, depth int) {
+func prettyPrint(node AccessPolicy) {
+	var dfs func(AccessPolicy, int)
+	dfs = func(n AccessPolicy, depth int) {
 		fmt.Printf("%s- %s", strings.Repeat("  ", depth), n.NodeType)
 		if n.NodeType == LeafNodeType {
 			fmt.Printf(": %s", n.Attribute)
