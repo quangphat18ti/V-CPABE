@@ -16,7 +16,7 @@ const (
 type AccessPolicy struct {
 	NodeType  NodeType
 	Attribute string
-	Children  []AccessPolicy
+	Children  []*AccessPolicy
 }
 
 func (a *AccessPolicy) FromString(policyStr string) (*AccessPolicy, error) {
@@ -27,21 +27,21 @@ func (a *AccessPolicy) FromString(policyStr string) (*AccessPolicy, error) {
 
 	tokens := tokenize(policyStr)
 
-	output := []AccessPolicy{}
+	output := []*AccessPolicy{}
 	opStack := []string{}
 
 	precedence := map[string]int{"OR": 1, "AND": 2}
 
-	applyOperator := func(op string, right, left AccessPolicy) AccessPolicy {
+	applyOperator := func(op string, right, left *AccessPolicy) *AccessPolicy {
 		var nodeType NodeType
 		if op == "AND" {
 			nodeType = AndNodeType
 		} else {
 			nodeType = OrNodeType
 		}
-		return AccessPolicy{
+		return &AccessPolicy{
 			NodeType: nodeType,
-			Children: []AccessPolicy{left, right},
+			Children: []*AccessPolicy{left, right},
 		}
 	}
 
@@ -83,7 +83,7 @@ func (a *AccessPolicy) FromString(policyStr string) (*AccessPolicy, error) {
 			opStack = append(opStack, token)
 
 		default: // attribute
-			output = append(output, AccessPolicy{
+			output = append(output, &AccessPolicy{
 				NodeType:  LeafNodeType,
 				Attribute: token,
 			})
@@ -107,5 +107,5 @@ func (a *AccessPolicy) FromString(policyStr string) (*AccessPolicy, error) {
 	if len(output) != 1 {
 		return nil, fmt.Errorf("invalid policy structure")
 	}
-	return &output[0], nil
+	return output[0], nil
 }

@@ -17,7 +17,7 @@ func accesPolicyToAccessTree(pk PublicKey, policy *AccessPolicy, index int) *Nod
 
 	children := make([]*Node, len(policy.Children))
 	for i, child := range policy.Children {
-		children[i] = accesPolicyToAccessTree(pk, &child, i+1)
+		children[i] = accesPolicyToAccessTree(pk, child, i+1)
 	}
 
 	threshold := 1

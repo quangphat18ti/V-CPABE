@@ -13,8 +13,8 @@ type Message bn256.GT
 type PublicKey struct {
 	G1       *bn256.G1
 	G2       *bn256.G2
-	H        *bn256.G2
-	F        *bn256.G2
+	H        *bn256.G2 // H = g2^β
+	F        *bn256.G2 // F = g2^α
 	EggAlpha *bn256.GT
 }
 
