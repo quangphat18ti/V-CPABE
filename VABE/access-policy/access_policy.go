@@ -19,6 +19,57 @@ type AccessPolicy struct {
 	Children  []*AccessPolicy
 }
 
+// Serializable version of AccessPolicy
+type SerializableAccessPolicy struct {
+	NodeType  NodeType                    `json:"node_type"`
+	Attribute string                      `json:"attribute"`
+	Children  []*SerializableAccessPolicy `json:"children"`
+}
+
+// Conversion functions: Original -> Serializable
+func (ap *AccessPolicy) ToSerializable() *SerializableAccessPolicy {
+	if ap == nil {
+		return nil
+	}
+
+	sap := &SerializableAccessPolicy{
+		NodeType:  ap.NodeType,
+		Attribute: ap.Attribute,
+	}
+
+	// Convert children recursively
+	if len(ap.Children) > 0 {
+		sap.Children = make([]*SerializableAccessPolicy, len(ap.Children))
+		for i, child := range ap.Children {
+			sap.Children[i] = child.ToSerializable()
+		}
+	}
+
+	return sap
+}
+
+// Conversion functions: Serializable -> Original
+func (sap *SerializableAccessPolicy) ToOriginal() *AccessPolicy {
+	if sap == nil {
+		return nil
+	}
+
+	ap := &AccessPolicy{
+		NodeType:  sap.NodeType,
+		Attribute: sap.Attribute,
+	}
+
+	// Convert children recursively
+	if len(sap.Children) > 0 {
+		ap.Children = make([]*AccessPolicy, len(sap.Children))
+		for i, child := range sap.Children {
+			ap.Children[i] = child.ToOriginal()
+		}
+	}
+
+	return ap
+}
+
 func (a *AccessPolicy) FromString(policyStr string) (*AccessPolicy, error) {
 	// Simplified policy parser - supports basic AND/OR operations and ()
 	// In a full implementation, you'd need a proper parser
@@ -30,11 +81,11 @@ func (a *AccessPolicy) FromString(policyStr string) (*AccessPolicy, error) {
 	output := []*AccessPolicy{}
 	opStack := []string{}
 
-	precedence := map[string]int{"OR": 1, "AND": 2}
+	precedence := map[string]int{"OR": 1, "or": 1, "AND": 2, "and": 2}
 
 	applyOperator := func(op string, right, left *AccessPolicy) *AccessPolicy {
 		var nodeType NodeType
-		if op == "AND" {
+		if op == "AND" || op == "and" {
 			nodeType = AndNodeType
 		} else {
 			nodeType = OrNodeType
@@ -66,7 +117,7 @@ func (a *AccessPolicy) FromString(policyStr string) (*AccessPolicy, error) {
 			}
 			opStack = opStack[:len(opStack)-1] // pop "("
 
-		case "AND", "OR":
+		case "AND", "OR", "and", "or":
 			for len(opStack) > 0 && precedence[opStack[len(opStack)-1]] >= precedence[token] {
 				op := opStack[len(opStack)-1]
 				opStack = opStack[:len(opStack)-1]

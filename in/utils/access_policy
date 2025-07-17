@@ -1,0 +1,38 @@
+{
+  "node_type": "AndNode",
+  "attribute": "",
+  "children": [
+    {
+      "node_type": "LeafNode",
+      "attribute": "hcmus",
+      "children": null
+    },
+    {
+      "node_type": "AndNode",
+      "attribute": "",
+      "children": [
+        {
+          "node_type": "LeafNode",
+          "attribute": "teacher",
+          "children": null
+        },
+        {
+          "node_type": "OrNode",
+          "attribute": "",
+          "children": [
+            {
+              "node_type": "LeafNode",
+              "attribute": "physics",
+              "children": null
+            },
+            {
+              "node_type": "LeafNode",
+              "attribute": "math",
+              "children": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

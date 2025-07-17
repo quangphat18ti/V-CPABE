@@ -1,6 +1,7 @@
 package bsw07
 
 import (
+	"cpabe-prototype/VABE/bsw07/models"
 	"crypto/rand"
 	"fmt"
 	"github.com/cloudflare/bn256"
@@ -8,7 +9,7 @@ import (
 	"time"
 )
 
-func (scheme *BSW07S) KeyGen(msk MasterSecretKey, pk PublicKey, userAttributes []string) (*SecretKey, *SecretKeyProof, error) {
+func (scheme *BSW07S) KeyGen(msk models.MasterSecretKey, pk models.PublicKey, userAttributes []string) (*models.SecretKey, *models.SecretKeyProof, error) {
 	start := time.Now()
 	defer func() {
 		fmt.Printf("KeyGen time: %v\n", time.Since(start))
@@ -34,7 +35,7 @@ func (scheme *BSW07S) KeyGen(msk MasterSecretKey, pk PublicKey, userAttributes [
 	temp := new(bn256.G1).Add(msk.G1Alpha, g1R)
 	k0 := new(bn256.G1).ScalarMult(temp, betaInv)
 
-	K := make(map[string]*AttributeKey)
+	K := make(map[string]*models.AttributeKey)
 	for _, attr := range userAttributes {
 		rAttr, err := rand.Int(rand.Reader, bn256.Order)
 		if err != nil {
@@ -55,19 +56,19 @@ func (scheme *BSW07S) KeyGen(msk MasterSecretKey, pk PublicKey, userAttributes [
 		// k_attr2 = g2^r_attr
 		kAttr2 := new(bn256.G2).ScalarMult(pk.G2, rAttr)
 
-		K[attr] = &AttributeKey{
+		K[attr] = &models.AttributeKey{
 			K1: kAttr1,
 			K2: kAttr2,
 		}
 	}
 
-	sk := &SecretKey{
+	sk := &models.SecretKey{
 		AttrList: userAttributes,
 		K0:       k0,
 		K:        K,
 	}
 
-	proof := &SecretKeyProof{
+	proof := &models.SecretKeyProof{
 		V: bn256.Pair(g1R, pk.G2),
 	}
 
@@ -80,7 +81,7 @@ func (scheme *BSW07S) KeyGen(msk MasterSecretKey, pk PublicKey, userAttributes [
 		k1 := new(bn256.G1).ScalarMult(hAttr, msk.Beta)
 		k2 := new(bn256.G2).ScalarMult(pk.H, msk.Beta)
 
-		sk.K[attr] = &AttributeKey{
+		sk.K[attr] = &models.AttributeKey{
 			K1: k1,
 			K2: k2,
 		}
@@ -89,6 +90,6 @@ func (scheme *BSW07S) KeyGen(msk MasterSecretKey, pk PublicKey, userAttributes [
 	return sk, proof, nil
 }
 
-func (scheme *BSW07S) VerifyKey(pk PublicKey, sk SecretKey, proof SecretKeyProof) (bool, error) {
+func (scheme *BSW07S) VerifyKey(pk models.PublicKey, sk models.SecretKey, proof models.SecretKeyProof) (bool, error) {
 	panic("implement me")
 }

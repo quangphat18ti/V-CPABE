@@ -20,7 +20,7 @@ func prettyPrint(node AccessPolicy) {
 		}
 		fmt.Println()
 		for _, child := range n.Children {
-			dfs(child, depth+1)
+			dfs(*child, depth+1)
 		}
 	}
 	dfs(node, 0)

@@ -1,6 +1,7 @@
 package bsw07
 
 import (
+	"cpabe-prototype/VABE/bsw07/models"
 	"crypto/rand"
 	"fmt"
 	"github.com/cloudflare/bn256"
@@ -32,7 +33,7 @@ func (scheme *BSW07S) hashToG1(data []byte) (*bn256.G1, error) {
 }
 
 // Setup generates the public key and master secret key for the BSW07 scheme.
-func (scheme *BSW07S) Setup() (*PublicKey, *MasterSecretKey, error) {
+func (scheme *BSW07S) Setup() (*models.PublicKey, *models.MasterSecretKey, error) {
 	start := time.Now()
 	defer func() {
 		fmt.Printf("Setup time: %v\n", time.Since(start))
@@ -75,14 +76,14 @@ func (scheme *BSW07S) Setup() (*PublicKey, *MasterSecretKey, error) {
 	g1Alpha := new(bn256.G1).ScalarMult(g1, alpha)
 	eggAlpha := bn256.Pair(g1Alpha, g2)
 
-	pk := &PublicKey{
+	pk := &models.PublicKey{
 		G1:       g1,
 		G2:       g2,
 		H:        h,
 		EggAlpha: eggAlpha,
 	}
 
-	msk := &MasterSecretKey{
+	msk := &models.MasterSecretKey{
 		Beta:    beta,
 		G1Alpha: g1Alpha,
 	}
