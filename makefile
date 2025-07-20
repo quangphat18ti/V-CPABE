@@ -20,30 +20,33 @@ all: build
 
 # Build all binaries
 build: $(TOOLS)
-	mkdir -p $(BINDIR)
-	go build -o $(BINDIR)/demo main.go
+	@echo "Building tools..."
+	@mkdir -p $(BINDIR)
+	@for tool in $(TOOLS); do \
+		go build -o $(BINDIR)/$$tool cmd/$$tool/main.go; \
+	done
+	@go build -o $(BINDIR)/demo main.go
+	@echo "Build completed.\n \n"
 
 $(TOOLS):
-	mkdir -p $(BINDIR)
-	go build -o $(BINDIR)/$@ cmd/$@/main.go
 
 setup: build
-	$(BINDIR)/setup
+	$(BINDIR)/setup $(ARGS)
 
 keygen: build
-	$(BINDIR)/key_generator
+	$(BINDIR)/key_generator $(ARGS)
 
 encrypt: build
-	$(BINDIR)/encryptor
+	$(BINDIR)/encryptor $(ARGS)
 
 decrypt: build
-	$(BINDIR)/decryptor --mode=decrypt
+	$(BINDIR)/decryptor --mode=decrypt $(ARGS)
 
 verify-key: build
-	$(BINDIR)/decryptor --mode=verify-key
+	$(BINDIR)/decryptor --mode=verify-key $(ARGS)
 
 verify-ciphertext: build
-	$(BINDIR)/decryptor --mode=verify-ciphertext
+	$(BINDIR)/decryptor --mode=verify-ciphertext $(ARGS)
 
 clean:
 	rm -rf $(BINDIR)
