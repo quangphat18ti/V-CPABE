@@ -19,13 +19,13 @@ func (scheme *BSW07S) VerifyKey(params VerifyKeyParams) (bool, error) {
 		fmt.Println("Verifying secret key...")
 	}
 
-	ok := scheme.verifyNumComponents(params.sk, params.userAttributes)
-	if !ok {
-		return false, fmt.Errorf("number of components in secret key does not match number of user attributes")
+	_, err := scheme.verifyNumComponents(params.sk, params.userAttributes)
+	if err != nil {
+		return false, err
 	}
 
 	// Verify the K0 in the secret key
-	ok = scheme.verifyK0ConstructWithAlphaBeta(params.pk, params.sk, params.keyProof)
+	ok := scheme.verifyK0ConstructWithAlphaBeta(params.pk, params.sk, params.keyProof)
 	if !ok {
 		return false, fmt.Errorf("K0 does not match the expected value based on alpha and beta")
 	}
@@ -39,14 +39,14 @@ func (scheme *BSW07S) VerifyKey(params VerifyKeyParams) (bool, error) {
 	return ok, nil
 }
 
-func (scheme *BSW07S) verifyNumComponents(sk models.SecretKey, attributes []string) bool {
+func (scheme *BSW07S) verifyNumComponents(sk models.SecretKey, attributes []string) (bool, error) {
 	// Deep Compare two Arrays
 	ok := utilities.Equal(sk.AttrList, attributes)
 	if !ok {
 		if scheme.Verbose {
 			fmt.Println("Secret key attributes do not match user attributes.")
 		}
-		return false
+		return false, fmt.Errorf("attributes do not match")
 	}
 
 	//	Compare map sk.K is all has keys in attributes
@@ -55,7 +55,7 @@ func (scheme *BSW07S) verifyNumComponents(sk models.SecretKey, attributes []stri
 			if scheme.Verbose {
 				fmt.Printf("Secret key does not contain key for attribute: %s\n", attr)
 			}
-			return false
+			return false, fmt.Errorf("secret key does not contain key for attribute: %s", attr)
 		}
 	}
 
@@ -64,10 +64,10 @@ func (scheme *BSW07S) verifyNumComponents(sk models.SecretKey, attributes []stri
 		if scheme.Verbose {
 			fmt.Println("Secret key does not have the same number of components as user attributes.")
 		}
-		return false
+		return false, fmt.Errorf("secret key does not have the same number of components as user attributes")
 	}
 
-	return true
+	return true, nil
 }
 
 func (scheme *BSW07S) verifyK0ConstructWithAlphaBeta(pk models.PublicKey, sk models.SecretKey, proof models.SecretKeyProof) bool {
@@ -78,8 +78,8 @@ func (scheme *BSW07S) verifyK0ConstructWithAlphaBeta(pk models.PublicKey, sk mod
 	if !utilities.CompareGTByString(left, right) {
 		if scheme.Verbose {
 			fmt.Println("✗ K0 does not match the expected value based on alpha and beta.")
-			fmt.Printf("Expected: %s\n", right.String())
-			fmt.Printf("Got:      %s\n", left.String())
+			//fmt.Printf("Expected: %s\n", right.String())
+			//fmt.Printf("Got:      %s\n", left.String())
 		}
 		return false
 	}
@@ -117,8 +117,8 @@ func (scheme *BSW07S) verifyEachComponent(pk models.PublicKey, sk models.SecretK
 		if !utilities.CompareGTByString(left, right) {
 			if scheme.Verbose {
 				fmt.Printf("✗ Component for attribute %s does not match the expected values.\n", attr)
-				fmt.Printf("Expected: %s\n", right.String())
-				fmt.Printf("Got:      %s\n", left.String())
+				//fmt.Printf("Expected: %s\n", right.String())
+				//fmt.Printf("Got:      %s\n", left.String())
 			}
 			return false
 		}

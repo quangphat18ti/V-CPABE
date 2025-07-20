@@ -34,9 +34,11 @@ func (scheme *BSW07S) Decrypt(pk models.PublicKey, ciphertext models.Ciphertext,
 		return nil, fmt.Errorf("user attributes do not satisfy the access policy: %v", key.AttrList)
 	}
 
-	err = models.SaveAccessTree("out/access_tree_decrypt.json", rootNode)
-	fmt.Printf("Pruned tree with minimum authorized set: %+v\n", minAuthorizedSet)
-	prettyPrint(*rootNode)
+	if scheme.Verbose {
+		err = models.SaveAccessTree("out/utils/access_tree_pruned_decrypt.json", rootNode)
+		fmt.Printf("Pruned tree with minimum authorized set: %+v\n", minAuthorizedSet)
+		prettyPrint(*rootNode)
+	}
 
 	prod, err := scheme.runDecryptRecursively(rootNode, key, big.NewInt(1))
 	if err != nil {

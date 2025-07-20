@@ -7,7 +7,6 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	"github.com/cloudflare/bn256"
 	"io"
@@ -78,8 +77,8 @@ func gTToAESKey(gt *bn256.GT) ([]byte, error) {
 	// Convert GT to byte slice
 	gtBytes := gt.Marshal()
 
-	gtJson, _ := json.Marshal(gtBytes)
-	fmt.Println("gTToAESKey:", string(gtJson))
+	//gtJson, _ := json.Marshal(gtBytes)
+	//fmt.Println("gTToAESKey:", string(gtJson))
 
 	// Hash the GT bytes to get a proper AES key size (32 bytes for AES-256)
 	hasher := sha256.New()

@@ -102,6 +102,7 @@ func (B BSW07Demo) Encrypt(encryptParams VABE.EncryptParams) (VABE.EncryptRespon
 	}
 
 	inputData, err := models.LoadPlainFile(encryptParams.InputFilePath)
+	fmt.Println("input file data: ", string(inputData))
 
 	ciphertext, proof, err := B.scheme.Encrypt(*publicKey, inputData, *accessPolicy)
 	if err != nil {
@@ -210,6 +211,38 @@ func (B BSW07Demo) VerifyKey(verifyKeyParams VABE.VerifyKeyParams) bool {
 	}
 
 	fmt.Println("Verification Result:", valid)
+	return valid
+}
+
+func (B BSW07Demo) VerifyCiphertext(verifyCiphertextParams VABE.VerifyCiphertextParams) bool {
+	defaults.SetDefaults(&verifyCiphertextParams)
+	publicKey, err := models.LoadPublicKey(verifyCiphertextParams.PublicKeyPath)
+	if err != nil {
+		fmt.Printf("Error loading public key: %s", err)
+		return false
+	}
+	ciphertext, err := models.LoadCiphertext(verifyCiphertextParams.CipherTextPath)
+	if err != nil {
+		fmt.Printf("Error loading ciphertext: %s", err)
+		return false
+	}
+	proof, err := models.LoadCiphertextProof(verifyCiphertextParams.CipherTextProofPath)
+	if err != nil {
+		fmt.Printf("Error loading ciphertext proof: %s", err)
+		return false
+	}
+
+	valid, err := B.scheme.VerifyCiphertext(VerifyCiphertextParams{
+		pk:         *publicKey,
+		ciphertext: *ciphertext,
+		proof:      *proof,
+	})
+
+	if err != nil {
+		fmt.Println("Verification Error:", err)
+		return false
+	}
+
 	return valid
 }
 

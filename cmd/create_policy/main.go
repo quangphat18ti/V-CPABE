@@ -1,7 +1,7 @@
 package main
 
 import (
-	"cpabe-prototype/VABE/access-policy"
+	. "cpabe-prototype/VABE/access-policy"
 	"cpabe-prototype/VABE/bsw07/models"
 	"flag"
 	"fmt"
@@ -31,11 +31,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create a new AccessPolicy instance
-	var ap access_policy.AccessPolicy
-
 	// Parse the policy string
-	parsedPolicy, err := ap.FromString(policyStr)
+	parsedPolicy, err := FromString(policyStr)
 	if err != nil {
 		fmt.Printf("Error parsing policy string: %v\n", err)
 		os.Exit(1)

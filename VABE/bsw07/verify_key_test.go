@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestSuccessFull(t *testing.T) {
+func TestVerifyKeySuccessFull(t *testing.T) {
 	fmt.Println("\nTest VerifyKey: Success Case")
 	attributes := []string{}
 	for i := 0; i < 10; i++ {
@@ -43,8 +43,56 @@ func TestSuccessFull(t *testing.T) {
 	}
 }
 
-func TestNumberAttributes(t *testing.T) {
-	fmt.Println("\nTest VerifyKey: Number of Attributes Mismatch Case")
+func TestVerifyKeyWrong(t *testing.T) {
+	fmt.Println("\nTest VerifyKey: Wrong Case")
+	attributes := []string{}
+	for i := 0; i < 10; i++ {
+		attributes = append(attributes, "attr__"+strconv.Itoa(i))
+	}
+
+	attributes_wrong := []string{}
+	for i := 0; i < 10; i++ {
+		attributes_wrong = append(attributes_wrong, "attr__wrong_"+strconv.Itoa(i))
+	}
+
+	scheme := NewBSW07S(true, nil)
+
+	pk, msk, err := scheme.Setup()
+	if err != nil {
+		t.Fatalf("Setup failed: %v", err)
+	}
+
+	sk, proof, err := scheme.KeyGen(*msk, *pk, attributes_wrong)
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	sk.AttrList = attributes // Intentionally set the attributes to the correct ones
+	for id, attr := range attributes_wrong {
+		val, _ := sk.K[attr]
+		delete(sk.K, attr) // Remove the wrong attribute keys
+		sk.K[attributes[id]] = val
+	}
+
+	ok, err := scheme.VerifyKey(VerifyKeyParams{
+		pk:             *pk,
+		sk:             *sk,
+		keyProof:       *proof,
+		userAttributes: attributes,
+	})
+
+	fmt.Printf(" Expected: VerifyKey FAILED")
+	if !ok {
+		fmt.Println(" Result: FAILED!")
+		fmt.Printf(" Error: %v\n", err)
+	} else {
+		fmt.Println(" Result: OK!")
+		t.Errorf(" VerifyKey should have failed, but it passed")
+	}
+}
+
+func TestVerifyKeyMoreAttributes(t *testing.T) {
+	fmt.Println("\nTest VerifyKey: More Attributes")
 	attributes := []string{}
 	for i := 0; i < 10; i++ {
 		attributes = append(attributes, "attr"+strconv.Itoa(i))

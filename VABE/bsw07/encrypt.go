@@ -4,6 +4,7 @@ import (
 	. "cpabe-prototype/VABE/access-policy"
 	"cpabe-prototype/VABE/bsw07/models"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"github.com/cloudflare/bn256"
 	"math/big"
@@ -29,6 +30,10 @@ func (scheme *BSW07S) Encrypt(pk models.PublicKey, msg []byte, policy AccessPoli
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to convert GT to AES key: %w", err)
 	}
+	if scheme.Verbose {
+		encryptedKeyJson, _ := json.Marshal(encryptedKey)
+		fmt.Println("AES Encrypted key:", string(encryptedKeyJson))
+	}
 
 	encryptedFileContent, err := EncryptAES(encryptedKey, msg)
 	if err != nil {
@@ -52,7 +57,9 @@ func (scheme *BSW07S) Encrypt(pk models.PublicKey, msg []byte, policy AccessPoli
 		return nil, nil, err
 	}
 
-	err = models.SaveAccessTree("out/access_tree.json", rootNode)
+	if scheme.Verbose {
+		err = models.SaveAccessTree("out/utils/access_tree_encrypt.json", rootNode)
+	}
 
 	// Compute C = M * e(g,g)^αs
 	eggS := new(bn256.GT).ScalarMult(pk.EggAlpha, s)

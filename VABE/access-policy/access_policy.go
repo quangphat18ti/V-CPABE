@@ -1,6 +1,8 @@
 package access_policy
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -70,7 +72,7 @@ func (sap *SerializableAccessPolicy) ToOriginal() *AccessPolicy {
 	return ap
 }
 
-func (a *AccessPolicy) FromString(policyStr string) (*AccessPolicy, error) {
+func FromString(policyStr string) (*AccessPolicy, error) {
 	// Simplified policy parser - supports basic AND/OR operations and ()
 	// In a full implementation, you'd need a proper parser
 
@@ -159,4 +161,41 @@ func (a *AccessPolicy) FromString(policyStr string) (*AccessPolicy, error) {
 		return nil, fmt.Errorf("invalid policy structure")
 	}
 	return output[0], nil
+}
+
+func CountLeafNodes(root *AccessPolicy) int {
+	if root == nil {
+		return 0
+	}
+
+	if root.NodeType == LeafNodeType {
+		return 1
+	}
+
+	leafCount := 0
+	for _, child := range root.Children {
+		leafCount += CountLeafNodes(child)
+	}
+
+	return leafCount
+}
+
+func CountTotalNodes(root *AccessPolicy) int {
+	if root == nil {
+		return 0
+	}
+
+	count := 1
+
+	for _, child := range root.Children {
+		count += CountTotalNodes(child)
+	}
+
+	return count
+}
+
+func Equal(a1 *AccessPolicy, a2 *AccessPolicy) bool {
+	a1Bytes, _ := json.Marshal(a1.ToSerializable())
+	a2Bytes, _ := json.Marshal(a2.ToSerializable())
+	return bytes.Equal(a1Bytes, a2Bytes)
 }

@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	cpabe = bsw07.NewBSW07Demo(true)
+	cpabe = bsw07.NewBSW07Demo(false)
 )
 
 // Demo function
@@ -16,7 +16,7 @@ func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("======= Help =======")
 		fmt.Println("Usage: cpabe <operation>")
-		fmt.Println("Available operations: setup, keygen, encrypt, decrypt, verify_key")
+		fmt.Println("Available operations: setup, keygen, encrypt, decrypt, verify_key, verify_ciphertext")
 		fmt.Println("====================")
 		return
 	}
@@ -57,5 +57,13 @@ func main() {
 			return
 		}
 		fmt.Println("Key verification succeeded.")
+	case "verify_ciphertext":
+		ok := cpabe.VerifyCiphertext(VABE.VerifyCiphertextParams{})
+		if !ok {
+			fmt.Println("Ciphertext verification failed.")
+			return
+		}
+		fmt.Println("Ciphertext verification succeeded.")
+	case "full_flow":
 	}
 }

@@ -72,14 +72,14 @@ func (scheme *BSW07S) KeyGen(msk models.MasterSecretKey, pk models.PublicKey, us
 		V: bn256.Pair(g1R, pk.G2),
 	}
 
-	if scheme.Verbose {
-		fmt.Println("Verifying generated keys...")
-		if verified, _ := scheme.VerifyKey(VerifyKeyParams{pk, *sk, *proof, userAttributes}); verified {
-			fmt.Println("✓ Secret key verification passed")
-		} else {
-			fmt.Println("✗ Secret key verification failed")
-		}
-	}
+	//if scheme.Verbose {
+	//	fmt.Println("Verifying generated keys...")
+	//	if verified, _ := scheme.VerifyKey(VerifyKeyParams{pk, *sk, *proof, userAttributes}); verified {
+	//		fmt.Println("✓ Secret key verification passed")
+	//	} else {
+	//		fmt.Println("✗ Secret key verification failed")
+	//	}
+	//}
 
 	return sk, proof, nil
 }

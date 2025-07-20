@@ -48,3 +48,9 @@ type VerifyKeyParams struct {
 	PrivateKeyProofPath string `default:"out/utils/private_key_proof"`
 	UserAttributesPath  string `default:"in/utils/attributes"`
 }
+
+type VerifyCiphertextParams struct {
+	PublicKeyPath       string `default:"out/utils/public_key"`
+	CipherTextPath      string `default:"out/utils/ciphertext"`
+	CipherTextProofPath string `default:"out/utils/ciphertext_proof"`
+}

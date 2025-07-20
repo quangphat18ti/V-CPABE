@@ -16,7 +16,7 @@ func TestLagrangeCoeff_OnePositions(t *testing.T) {
 
 	result := computeLagrangeCoeff(positions, targetPos, bn256.Order)
 
-	fmt.Printf("\nTest 1 - One position:\n")
+	fmt.Printf("\nTest Utils: Calculate Larrange with one value:\n")
 	fmt.Printf("  Positions: %v\n", positions)
 	fmt.Printf("  Target: %d\n", targetPos)
 	fmt.Printf("  Result: %s\n", result.String())
@@ -40,7 +40,7 @@ func TestLagrangeCoeff_MultiplePositions(t *testing.T) {
 
 	result := computeLagrangeCoeff(positionsBig, targetPos, bn256.Order)
 
-	fmt.Printf("\nTest 2 - Multiple positions:\n")
+	fmt.Printf("\nTTest Utils: Calculate Larrange with multiple values:\n")
 	fmt.Printf("  Positions: %v\n", positions)
 	fmt.Printf("  Target: %d\n", targetPos)
 	fmt.Printf("  Result: %s\n", result.String())

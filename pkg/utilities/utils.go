@@ -76,3 +76,7 @@ func CompareGTByString(a, b *bn256.GT) bool {
 	//return a.String() == b.String()
 	return bytes.Equal(a.Marshal(), b.Marshal())
 }
+
+func CompareG2ByString(a, b *bn256.G2) bool {
+	return bytes.Equal(a.Marshal(), b.Marshal())
+}
