@@ -2,6 +2,7 @@ package bsw07
 
 import (
 	"cpabe-prototype/VABE/bsw07/models"
+	"encoding/json"
 	"fmt"
 	"github.com/cloudflare/bn256"
 	"math/big"
@@ -15,12 +16,13 @@ func (scheme *BSW07S) Decrypt(pk models.PublicKey, ciphertext models.Ciphertext,
 	}()
 
 	if scheme.Verbose {
-		fmt.Println("Decryption algorithm:")
+		fmt.Println()
+		fmt.Println("Decryption:")
 	}
 
 	rootNode, err := scheme.recoverAccessTreeFromCiphertext(ciphertext)
 	if err != nil {
-		return nil, fmt.Errorf("failed to recover access tree from ciphertext: %w", err)
+		return nil, fmt.Errorf("failed to recover access tree from Ciphertext: %w", err)
 	}
 
 	mapAttr := make(map[string]bool)
@@ -62,6 +64,11 @@ func (scheme *BSW07S) Decrypt(pk models.PublicKey, ciphertext models.Ciphertext,
 	msg, err := DecryptAES(encryptedKey, ciphertext.EncryptedData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt file content: %w", err)
+	}
+
+	if scheme.Verbose {
+		msgJson, _ := json.Marshal(msg)
+		fmt.Println("Decrypted message:", string(msgJson))
 	}
 
 	return msg, nil
@@ -128,7 +135,7 @@ func (scheme *BSW07S) recoverAccessTreeFromCiphertext(ciphertext models.Cipherte
 	}
 
 	if indexInList != len(ciphertext.C) {
-		return nil, fmt.Errorf("number of leaf nodes in ciphertext and access tree do not match")
+		return nil, fmt.Errorf("number of leaf nodes in Ciphertext and access tree do not match")
 	}
 
 	return rootNode, nil
@@ -136,7 +143,7 @@ func (scheme *BSW07S) recoverAccessTreeFromCiphertext(ciphertext models.Cipherte
 
 func (scheme *BSW07S) distributeCiphertextToNodes(ciphertext models.Ciphertext, node *models.Node, idInList *int) error {
 	if *idInList > len(ciphertext.C) {
-		return fmt.Errorf("number of leaf nodes in ciphertext and access tree do not match")
+		return fmt.Errorf("number of leaf nodes in Ciphertext and access tree do not match")
 	}
 
 	if node.IsLeaf {

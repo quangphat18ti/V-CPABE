@@ -8,10 +8,10 @@ import (
 )
 
 type VerifyKeyParams struct {
-	pk             models.PublicKey
-	sk             models.SecretKey
-	keyProof       models.SecretKeyProof
-	userAttributes []string
+	PublicKey      models.PublicKey
+	SecretKey      models.SecretKey
+	KeyProof       models.SecretKeyProof
+	UserAttributes []string
 }
 
 func (scheme *BSW07S) VerifyKey(params VerifyKeyParams) (bool, error) {
@@ -19,19 +19,19 @@ func (scheme *BSW07S) VerifyKey(params VerifyKeyParams) (bool, error) {
 		fmt.Println("Verifying secret key...")
 	}
 
-	_, err := scheme.verifyNumComponents(params.sk, params.userAttributes)
+	_, err := scheme.verifyNumComponents(params.SecretKey, params.UserAttributes)
 	if err != nil {
 		return false, err
 	}
 
 	// Verify the K0 in the secret key
-	ok := scheme.verifyK0ConstructWithAlphaBeta(params.pk, params.sk, params.keyProof)
+	ok := scheme.verifyK0ConstructWithAlphaBeta(params.PublicKey, params.SecretKey, params.KeyProof)
 	if !ok {
 		return false, fmt.Errorf("K0 does not match the expected value based on alpha and beta")
 	}
 
 	// Verify each component
-	ok = scheme.verifyEachComponent(params.pk, params.sk, params.keyProof)
+	ok = scheme.verifyEachComponent(params.PublicKey, params.SecretKey, params.KeyProof)
 	if !ok {
 		return false, fmt.Errorf("one or more components in the secret key do not match the expected values")
 	}
@@ -49,7 +49,7 @@ func (scheme *BSW07S) verifyNumComponents(sk models.SecretKey, attributes []stri
 		return false, fmt.Errorf("attributes do not match")
 	}
 
-	//	Compare map sk.K is all has keys in attributes
+	//	Compare map SecretKey.K is all has keys in attributes
 	for _, attr := range sk.AttrList {
 		if _, exists := sk.K[attr]; !exists {
 			if scheme.Verbose {
@@ -59,7 +59,7 @@ func (scheme *BSW07S) verifyNumComponents(sk models.SecretKey, attributes []stri
 		}
 	}
 
-	// Compare the size of sk.K with the size of attributes
+	// Compare the size of SecretKey.K with the size of attributes
 	if len(sk.K) != len(sk.AttrList) {
 		if scheme.Verbose {
 			fmt.Println("Secret key does not have the same number of components as user attributes.")
@@ -71,7 +71,7 @@ func (scheme *BSW07S) verifyNumComponents(sk models.SecretKey, attributes []stri
 }
 
 func (scheme *BSW07S) verifyK0ConstructWithAlphaBeta(pk models.PublicKey, sk models.SecretKey, proof models.SecretKeyProof) bool {
-	// e(K0, H) should equal e(g1, g2)^alpha * proof.V
+	// e(K0, H) should equal e(g1, g2)^alpha * Proof.V
 	left := bn256.Pair(sk.K0, pk.H)
 	right := new(bn256.GT).Add(pk.EggAlpha, proof.V)
 
@@ -91,7 +91,7 @@ func (scheme *BSW07S) verifyK0ConstructWithAlphaBeta(pk models.PublicKey, sk mod
 }
 
 func (scheme *BSW07S) verifyEachComponent(pk models.PublicKey, sk models.SecretKey, proof models.SecretKeyProof) bool {
-	//	for each component in K[]: e(K[attr].D1, g2) = e(H[attr], K[attr].D2) * proof.V
+	//	for each component in K[]: e(K[attr].D1, g2) = e(H[attr], K[attr].D2) * Proof.V
 	for attr, key := range sk.K {
 		fmt.Printf("Verifying key for attribute %s\n", attr)
 		if key == nil {

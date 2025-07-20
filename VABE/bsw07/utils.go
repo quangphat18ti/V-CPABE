@@ -109,7 +109,7 @@ func EncryptAES(key, plaintext []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-// Decrypt decrypts ciphertext using AES-GCM.
+// Decrypt decrypts Ciphertext using AES-GCM.
 func DecryptAES(key, ciphertext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -123,7 +123,7 @@ func DecryptAES(key, ciphertext []byte) ([]byte, error) {
 
 	nonceSize := aesGCM.NonceSize()
 	if len(ciphertext) < nonceSize {
-		return nil, fmt.Errorf("ciphertext too short")
+		return nil, fmt.Errorf("Ciphertext too short")
 	}
 
 	nonce, encryptedMessage := ciphertext[:nonceSize], ciphertext[nonceSize:]

@@ -27,10 +27,10 @@ func TestDecryptHappyCase(t *testing.T) {
 		t.Fatalf("KeyGen failed: %v", err)
 	}
 	ok, err = scheme.VerifyKey(VerifyKeyParams{
-		pk:             *pk,
-		sk:             *key,
-		keyProof:       *keyProof,
-		userAttributes: attributes,
+		PublicKey:      *pk,
+		SecretKey:      *key,
+		KeyProof:       *keyProof,
+		UserAttributes: attributes,
 	})
 	if err != nil {
 		t.Fatalf("VerifyKey failed: %v", err)
@@ -48,14 +48,14 @@ func TestDecryptHappyCase(t *testing.T) {
 	}
 
 	verifyParams := VerifyCiphertextParams{
-		pk:           *pk,
-		ciphertext:   *ciphertext,
-		proof:        *proof,
-		accessPolicy: *accessPolicy,
+		PublicKey:    *pk,
+		Ciphertext:   *ciphertext,
+		Proof:        *proof,
+		AccessPolicy: *accessPolicy,
 	}
 	ok, err = scheme.VerifyCiphertext(verifyParams)
 	if err != nil {
-		t.Errorf("Failed to verify ciphertext: %v", err)
+		t.Errorf("Failed to verify Ciphertext: %v", err)
 	}
 	if !ok {
 		t.Errorf("Ciphertext verification failed, expected success")
@@ -97,10 +97,10 @@ func TestDecryptFailedCase(t *testing.T) {
 		t.Fatalf("KeyGen failed: %v", err)
 	}
 	ok, err = scheme.VerifyKey(VerifyKeyParams{
-		pk:             *pk,
-		sk:             *key,
-		keyProof:       *keyProof,
-		userAttributes: attributes,
+		PublicKey:      *pk,
+		SecretKey:      *key,
+		KeyProof:       *keyProof,
+		UserAttributes: attributes,
 	})
 	if err != nil {
 		t.Fatalf("VerifyKey failed: %v", err)
@@ -118,14 +118,14 @@ func TestDecryptFailedCase(t *testing.T) {
 	}
 
 	verifyParams := VerifyCiphertextParams{
-		pk:           *pk,
-		ciphertext:   *ciphertext,
-		proof:        *proof,
-		accessPolicy: *accessPolicy,
+		PublicKey:    *pk,
+		Ciphertext:   *ciphertext,
+		Proof:        *proof,
+		AccessPolicy: *accessPolicy,
 	}
 	ok, err = scheme.VerifyCiphertext(verifyParams)
 	if err != nil {
-		t.Errorf("Failed to verify ciphertext: %v", err)
+		t.Errorf("Failed to verify Ciphertext: %v", err)
 	}
 	if !ok {
 		t.Errorf("Ciphertext verification failed, expected success")

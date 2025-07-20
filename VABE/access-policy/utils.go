@@ -11,7 +11,7 @@ func tokenize(input string) []string {
 	return re.FindAllString(input, -1)
 }
 
-func prettyPrint(node AccessPolicy) {
+func PrettyPrint(node AccessPolicy) {
 	var dfs func(AccessPolicy, int)
 	dfs = func(n AccessPolicy, depth int) {
 		fmt.Printf("%s- %s", strings.Repeat("  ", depth), n.NodeType)

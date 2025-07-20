@@ -74,9 +74,9 @@ func (B BSW07Demo) KeyGen(keyGenParams VABE.KeyGenParams) (VABE.KeyGenResponse, 
 		return response, fmt.Errorf("Error saving user private key: %s", err)
 	}
 
-	err = models.SavePrivateKeyProof(response.PrivateKeyProofPath, proof)
+	err = models.SaveSecretKeyProof(response.PrivateKeyProofPath, proof)
 	if err != nil {
-		return response, fmt.Errorf("Error saving private key proof: %s", err)
+		return response, fmt.Errorf("Error saving private key Proof: %s", err)
 	}
 
 	if B.Verbose {
@@ -102,7 +102,7 @@ func (B BSW07Demo) Encrypt(encryptParams VABE.EncryptParams) (VABE.EncryptRespon
 	}
 
 	inputData, err := models.LoadPlainFile(encryptParams.InputFilePath)
-	fmt.Println("input file data: ", string(inputData))
+	//fmt.Println("input file data: \n", string(inputData))
 
 	ciphertext, proof, err := B.scheme.Encrypt(*publicKey, inputData, *accessPolicy)
 	if err != nil {
@@ -116,12 +116,12 @@ func (B BSW07Demo) Encrypt(encryptParams VABE.EncryptParams) (VABE.EncryptRespon
 
 	err = models.SaveCiphertext(response.CipherTextPath, ciphertext)
 	if err != nil {
-		return response, fmt.Errorf("Error saving ciphertext: %s", err)
+		return response, fmt.Errorf("Error saving Ciphertext: %s", err)
 	}
 
 	err = models.SaveCiphertextProof(response.CipherTextProofPath, proof)
 	if err != nil {
-		return response, fmt.Errorf("Error saving ciphertext proof: %s", err)
+		return response, fmt.Errorf("Error saving Ciphertext Proof: %s", err)
 	}
 
 	if B.Verbose {
@@ -148,13 +148,14 @@ func (B BSW07Demo) Decrypt(decryptParams VABE.DecryptParams) (VABE.DecryptRespon
 
 	ciphertext, err := models.LoadCiphertext(decryptParams.CipherTextPath)
 	if err != nil {
-		return VABE.DecryptResponse{}, fmt.Errorf("Error loading ciphertext: %s", err)
+		return VABE.DecryptResponse{}, fmt.Errorf("Error loading Ciphertext: %s", err)
 	}
 
 	msg, err := B.scheme.Decrypt(*publicKey, *ciphertext, userPrivateKey)
 	if err != nil {
 		return VABE.DecryptResponse{}, fmt.Errorf("Decryption Error: %s", err)
 	}
+	//fmt.Println("msg:", string(msg))
 
 	response := VABE.DecryptResponse{
 		DecryptedFilePath: decryptParams.DecryptedFilePath,
@@ -187,9 +188,9 @@ func (B BSW07Demo) VerifyKey(verifyKeyParams VABE.VerifyKeyParams) bool {
 		return false
 	}
 
-	privateKeyProof, err := models.LoadPrivateKeyProof(verifyKeyParams.PrivateKeyProofPath)
+	privateKeyProof, err := models.LoadSecretKeyProof(verifyKeyParams.PrivateKeyProofPath)
 	if err != nil {
-		fmt.Println("Error loading private key proof:", err)
+		fmt.Println("Error loading private key Proof:", err)
 		return false
 	}
 
@@ -200,10 +201,10 @@ func (B BSW07Demo) VerifyKey(verifyKeyParams VABE.VerifyKeyParams) bool {
 	}
 
 	valid, err := B.scheme.VerifyKey(VerifyKeyParams{
-		pk:             *publicKey,
-		sk:             *userPrivateKey,
-		keyProof:       *privateKeyProof,
-		userAttributes: userAttributes,
+		PublicKey:      *publicKey,
+		SecretKey:      *userPrivateKey,
+		KeyProof:       *privateKeyProof,
+		UserAttributes: userAttributes,
 	})
 	if err != nil {
 		fmt.Println("Verification Error:", err)
@@ -223,19 +224,19 @@ func (B BSW07Demo) VerifyCiphertext(verifyCiphertextParams VABE.VerifyCiphertext
 	}
 	ciphertext, err := models.LoadCiphertext(verifyCiphertextParams.CipherTextPath)
 	if err != nil {
-		fmt.Printf("Error loading ciphertext: %s", err)
+		fmt.Printf("Error loading Ciphertext: %s", err)
 		return false
 	}
 	proof, err := models.LoadCiphertextProof(verifyCiphertextParams.CipherTextProofPath)
 	if err != nil {
-		fmt.Printf("Error loading ciphertext proof: %s", err)
+		fmt.Printf("Error loading Ciphertext Proof: %s", err)
 		return false
 	}
 
 	valid, err := B.scheme.VerifyCiphertext(VerifyCiphertextParams{
-		pk:         *publicKey,
-		ciphertext: *ciphertext,
-		proof:      *proof,
+		PublicKey:  *publicKey,
+		Ciphertext: *ciphertext,
+		Proof:      *proof,
 	})
 
 	if err != nil {
@@ -251,7 +252,7 @@ func NewBSW07Demo(verbose bool) *BSW07Demo {
 		Verbose: verbose,
 		scheme: BSW07S{
 			Verbose: verbose,
-			salt:    []byte("default_salt"), // Default salt if none provided
+			Salt:    []byte("default_salt"), // Default Salt if none provided
 		},
 	}
 }

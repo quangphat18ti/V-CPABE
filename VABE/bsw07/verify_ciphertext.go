@@ -10,44 +10,44 @@ import (
 )
 
 type VerifyCiphertextParams struct {
-	pk           models.PublicKey
-	ciphertext   models.Ciphertext
-	proof        models.CiphertextProof
-	accessPolicy AccessPolicy
+	PublicKey    models.PublicKey
+	Ciphertext   models.Ciphertext
+	Proof        models.CiphertextProof
+	AccessPolicy AccessPolicy
 }
 
 func (scheme *BSW07S) VerifyCiphertext(params VerifyCiphertextParams) (bool, error) {
 	if scheme.Verbose {
-		println("Verifying ciphertext...")
+		println("Verifying Ciphertext...")
 	}
 
-	if !Equal(&params.accessPolicy, &params.ciphertext.Policy) {
+	if !Equal(&params.AccessPolicy, &params.Ciphertext.Policy) {
 		return false, fmt.Errorf("wrong policy")
 	}
 
-	err := scheme.verifyCTNumComponents(params.ciphertext, params.proof, params.accessPolicy)
+	err := scheme.verifyCTNumComponents(params.Ciphertext, params.Proof, params.AccessPolicy)
 	if err != nil {
 		return false, err
 	}
 
-	err = scheme.verifyCTUsingSameS(params.ciphertext, params.pk, params.proof)
+	err = scheme.verifyCTUsingSameS(params.Ciphertext, params.PublicKey, params.Proof)
 	if err != nil {
-		return false, fmt.Errorf("failed to verify ciphertext using same secret: %w", err)
+		return false, fmt.Errorf("failed to verify Ciphertext using same secret: %w", err)
 	}
 
-	rootNode, err := scheme.recoverAccessTreeFromCiphertext(params.ciphertext)
+	rootNode, err := scheme.recoverAccessTreeFromCiphertext(params.Ciphertext)
 	if err != nil {
-		return false, fmt.Errorf("failed to recover access tree from ciphertext: %w", err)
+		return false, fmt.Errorf("failed to recover access tree from Ciphertext: %w", err)
 	}
 
 	index := 0
-	err = scheme.verifyLeafNodes(&params.ciphertext, &params.pk, rootNode, &index)
+	err = scheme.verifyLeafNodes(&params.Ciphertext, &params.PublicKey, rootNode, &index)
 	if err != nil {
 		return false, fmt.Errorf("failed to verify leaf nodes: %w", err)
 	}
 
 	index = 0
-	_, err = scheme.verifyInnerNodes(&params.ciphertext, &params.pk, &params.proof, rootNode, &index)
+	_, err = scheme.verifyInnerNodes(&params.Ciphertext, &params.PublicKey, &params.Proof, rootNode, &index)
 	if err != nil {
 		return false, fmt.Errorf("failed to verify inner nodes: %w", err)
 	}
@@ -55,21 +55,21 @@ func (scheme *BSW07S) VerifyCiphertext(params VerifyCiphertextParams) (bool, err
 }
 
 func (scheme *BSW07S) verifyCTNumComponents(ciphertext models.Ciphertext, proof models.CiphertextProof, accessPolicy AccessPolicy) error {
-	// check access_policy with ciphertext.accees_policy
+	// check access_policy with Ciphertext.accees_policy
 	numLeaves := CountLeafNodes(&accessPolicy)
 	totalNodes := CountTotalNodes(&accessPolicy)
 	numInnerNodes := totalNodes - numLeaves
 
 	if len(ciphertext.C) != numLeaves {
-		return fmt.Errorf("wrong number of leaves in ciphertext")
+		return fmt.Errorf("wrong number of leaves in Ciphertext")
 	}
 
 	if len(proof.CommitShareSecretInnerNodesG2) != numInnerNodes {
-		return fmt.Errorf("wrong number of inner nodes in ciphertext proof")
+		return fmt.Errorf("wrong number of inner nodes in Ciphertext Proof")
 	}
 
 	if len(proof.CommitAllPolynomialG2) != numInnerNodes {
-		return fmt.Errorf("wrong number of inner nodes in ciphertext proof")
+		return fmt.Errorf("wrong number of inner nodes in Ciphertext Proof")
 	}
 
 	return nil
@@ -86,14 +86,14 @@ func (scheme *BSW07S) verifyCTUsingSameS(ciphertext models.Ciphertext, pk models
 		return fmt.Errorf("e(CommitRootSecretG1, g2) does not equal e(g1, Ciphertext.CommitShareSecretInnerNodesG2[0])")
 	}
 
-	// e(CommitRootSecretG1, h) = e(g1, ciphertext.C0)
+	// e(CommitRootSecretG1, h) = e(g1, Ciphertext.C0)
 	left = bn256.Pair(proof.CommitRootSecretG1, pk.H)
 	right = bn256.Pair(pk.G1, ciphertext.C0)
 	if !utilities.CompareGTByString(left, right) {
 		if scheme.Verbose {
-			fmt.Println("Verification failed: e(CommitRootSecretG1, h) does not equal e(g1, ciphertext.C0)")
+			fmt.Println("Verification failed: e(CommitRootSecretG1, h) does not equal e(g1, Ciphertext.C0)")
 		}
-		return fmt.Errorf("e(CommitRootSecretG1, h) does not equal e(g1, ciphertext.C0)")
+		return fmt.Errorf("e(CommitRootSecretG1, h) does not equal e(g1, Ciphertext.C0)")
 	}
 
 	return nil

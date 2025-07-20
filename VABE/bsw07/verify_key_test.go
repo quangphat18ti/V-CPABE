@@ -26,10 +26,10 @@ func TestVerifyKeySuccessFull(t *testing.T) {
 	}
 
 	ok, err := scheme.VerifyKey(VerifyKeyParams{
-		pk:             *pk,
-		sk:             *sk,
-		keyProof:       *proof,
-		userAttributes: attributes,
+		PublicKey:      *pk,
+		SecretKey:      *sk,
+		KeyProof:       *proof,
+		UserAttributes: attributes,
 	})
 
 	if err != nil {
@@ -75,10 +75,10 @@ func TestVerifyKeyWrong(t *testing.T) {
 	}
 
 	ok, err := scheme.VerifyKey(VerifyKeyParams{
-		pk:             *pk,
-		sk:             *sk,
-		keyProof:       *proof,
-		userAttributes: attributes,
+		PublicKey:      *pk,
+		SecretKey:      *sk,
+		KeyProof:       *proof,
+		UserAttributes: attributes,
 	})
 
 	fmt.Printf(" Expected: VerifyKey FAILED")
@@ -114,10 +114,10 @@ func TestVerifyKeyMoreAttributes(t *testing.T) {
 	attributes = append(attributes, "extra_attr")
 
 	ok, err := scheme.VerifyKey(VerifyKeyParams{
-		pk:             *pk,
-		sk:             *sk,
-		keyProof:       *proof,
-		userAttributes: attributes,
+		PublicKey:      *pk,
+		SecretKey:      *sk,
+		KeyProof:       *proof,
+		UserAttributes: attributes,
 	})
 
 	if ok || err == nil {

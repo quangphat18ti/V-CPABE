@@ -18,7 +18,8 @@ func (scheme *BSW07S) Encrypt(pk models.PublicKey, msg []byte, policy AccessPoli
 	}()
 
 	if scheme.Verbose {
-		fmt.Println("Encryption algorithm:")
+		fmt.Println()
+		fmt.Println("---> Encryption phase <---:")
 	}
 
 	_, randomGT, err := bn256.RandomGT(rand.Reader)
@@ -32,6 +33,7 @@ func (scheme *BSW07S) Encrypt(pk models.PublicKey, msg []byte, policy AccessPoli
 	}
 	if scheme.Verbose {
 		encryptedKeyJson, _ := json.Marshal(encryptedKey)
+		fmt.Println("Msg:", string(msg))
 		fmt.Println("AES Encrypted key:", string(encryptedKeyJson))
 	}
 

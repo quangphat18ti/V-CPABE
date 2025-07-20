@@ -16,6 +16,7 @@ func (scheme *BSW07S) KeyGen(msk models.MasterSecretKey, pk models.PublicKey, us
 	}()
 
 	if scheme.Verbose {
+		fmt.Println()
 		fmt.Println("KeyGen algorithm:")
 	}
 
@@ -74,7 +75,7 @@ func (scheme *BSW07S) KeyGen(msk models.MasterSecretKey, pk models.PublicKey, us
 
 	//if scheme.Verbose {
 	//	fmt.Println("Verifying generated keys...")
-	//	if verified, _ := scheme.VerifyKey(VerifyKeyParams{pk, *sk, *proof, userAttributes}); verified {
+	//	if verified, _ := scheme.VerifyKey(VerifyKeyParams{PublicKey, *SecretKey, *Proof, UserAttributes}); verified {
 	//		fmt.Println("✓ Secret key verification passed")
 	//	} else {
 	//		fmt.Println("✗ Secret key verification failed")

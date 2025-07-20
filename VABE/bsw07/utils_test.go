@@ -72,7 +72,7 @@ func TestAESEncryptionDecryption(t *testing.T) {
 		t.Fatalf("Encryption failed: %v", err)
 	}
 
-	// Decrypt the ciphertext
+	// Decrypt the Ciphertext
 	decrypted, err := DecryptAES(key, ciphertext)
 	if err != nil {
 		t.Fatalf("Decryption failed: %v", err)

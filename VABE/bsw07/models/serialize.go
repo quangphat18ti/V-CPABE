@@ -2,37 +2,13 @@ package models
 
 import (
 	. "cpabe-prototype/VABE/access-policy"
-	"encoding/json"
+	"cpabe-prototype/pkg/utilities"
 	"fmt"
 	"github.com/cloudflare/bn256"
 	"math/big"
 	"os"
+	"slices"
 )
-
-// Utility functions for file I/O
-
-func SaveToFile(filename string, data interface{}) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(data)
-}
-
-func LoadFromFile(filename string, data interface{}) error {
-	file, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	decoder := json.NewDecoder(file)
-	return decoder.Decode(data)
-}
 
 // Serializable versions of the original structs
 type SerializablePublicKey struct {
@@ -164,9 +140,11 @@ func (cp *CiphertextProof) ToSerializable() *SerializableCiphertextProof {
 	// Convert CommitAllPolynomialG2 (2D slice)
 	commitAllPoly := make([][]byte, 0)
 	for _, polyGroup := range cp.CommitAllPolynomialG2 {
+		polyBytes := make([]byte, 0)
 		for _, poly := range polyGroup {
-			commitAllPoly = append(commitAllPoly, poly.Marshal())
+			polyBytes = slices.Concat(polyBytes, poly.Marshal())
 		}
+		commitAllPoly = append(commitAllPoly, polyBytes)
 	}
 
 	return &SerializableCiphertextProof{
@@ -368,12 +346,24 @@ func (scp *SerializableCiphertextProof) ToOriginal() (*CiphertextProof, error) {
 
 	// Note: CommitAllPolynomialG2 reconstruction depends on your specific structure
 	// This is a simplified version - you might need to adjust based on your actual 2D structure
-	cp.CommitAllPolynomialG2 = make([][]*bn256.G2, 1)
-	cp.CommitAllPolynomialG2[0] = make([]*bn256.G2, len(scp.CommitAllPolynomialG2))
-	for i, polyData := range scp.CommitAllPolynomialG2 {
-		cp.CommitAllPolynomialG2[0][i] = new(bn256.G2)
-		if _, err := cp.CommitAllPolynomialG2[0][i].Unmarshal(polyData); err != nil {
-			return nil, err
+
+	// Each value is a 256-bit number.
+	//const numBytes = 256 / 8 * 4 // 256 bits = 32 bytes, 4 values = 128 bytes
+	const eachPointSize = (256/8)*4 + 1
+
+	numGroups := len(scp.CommitAllPolynomialG2)
+	cp.CommitAllPolynomialG2 = make([][]*bn256.G2, numGroups)
+	for i := 0; i < numGroups; i++ {
+		elementOfGroups := len(scp.CommitAllPolynomialG2[i]) / eachPointSize // Assuming each group has 32 elements
+		cp.CommitAllPolynomialG2[i] = make([]*bn256.G2, elementOfGroups)
+		for j := 0; j < elementOfGroups; j++ {
+			cp.CommitAllPolynomialG2[i][j] = new(bn256.G2)
+			start := j * eachPointSize
+			end := start + eachPointSize
+			bytes := scp.CommitAllPolynomialG2[i][start:end]
+			if _, err := cp.CommitAllPolynomialG2[i][j].Unmarshal(bytes); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal CommitAllPolynomialG2[%d][%d]: %v", i, j, err)
+			}
 		}
 	}
 
@@ -407,84 +397,84 @@ func (svp *SerializableVerificationParams) ToOriginal() (*VerificationParams, er
 // Convenience functions for common operations
 
 func SavePublicKey(filename string, pk *PublicKey) error {
-	return SaveToFile(filename, pk.ToSerializable())
+	return utilities.SaveToFile(filename, pk.ToSerializable())
 }
 
 func LoadPublicKey(filename string) (*PublicKey, error) {
 	var spk SerializablePublicKey
-	if err := LoadFromFile(filename, &spk); err != nil {
+	if err := utilities.LoadFromFile(filename, &spk); err != nil {
 		return nil, err
 	}
 	return spk.ToOriginal()
 }
 
 func SaveMasterSecretKey(filename string, msk *MasterSecretKey) error {
-	return SaveToFile(filename, msk.ToSerializable())
+	return utilities.SaveToFile(filename, msk.ToSerializable())
 }
 
 func LoadMasterSecretKey(filename string) (*MasterSecretKey, error) {
 	var smsk SerializableMasterSecretKey
-	if err := LoadFromFile(filename, &smsk); err != nil {
+	if err := utilities.LoadFromFile(filename, &smsk); err != nil {
 		return nil, err
 	}
 	return smsk.ToOriginal()
 }
 
 func SaveSecretKey(filename string, sk *SecretKey) error {
-	return SaveToFile(filename, sk.ToSerializable())
+	return utilities.SaveToFile(filename, sk.ToSerializable())
 }
 
 func LoadSecretKey(filename string) (*SecretKey, error) {
 	var ssk SerializableSecretKey
-	if err := LoadFromFile(filename, &ssk); err != nil {
+	if err := utilities.LoadFromFile(filename, &ssk); err != nil {
 		return nil, err
 	}
 	return ssk.ToOriginal()
 }
 
-func SavePrivateKeyProof(filename string, skp *SecretKeyProof) error {
-	return SaveToFile(filename, skp.ToSerializable())
+func SaveSecretKeyProof(filename string, skp *SecretKeyProof) error {
+	return utilities.SaveToFile(filename, skp.ToSerializable())
 }
 
-func LoadPrivateKeyProof(filename string) (*SecretKeyProof, error) {
+func LoadSecretKeyProof(filename string) (*SecretKeyProof, error) {
 	var sskp SerializableSecretKeyProof
-	if err := LoadFromFile(filename, &sskp); err != nil {
+	if err := utilities.LoadFromFile(filename, &sskp); err != nil {
 		return nil, err
 	}
 	return sskp.ToOriginal()
 }
 
 func SaveCiphertext(filename string, ct *Ciphertext) error {
-	return SaveToFile(filename, ct.ToSerializable())
+	return utilities.SaveToFile(filename, ct.ToSerializable())
 }
 
 func LoadCiphertext(filename string) (*Ciphertext, error) {
 	var sct SerializableCiphertext
-	if err := LoadFromFile(filename, &sct); err != nil {
+	if err := utilities.LoadFromFile(filename, &sct); err != nil {
 		return nil, err
 	}
 	return sct.ToOriginal()
 }
 
 func SaveCiphertextProof(filename string, ctp *CiphertextProof) error {
-	return SaveToFile(filename, ctp.ToSerializable())
+	return utilities.SaveToFile(filename, ctp.ToSerializable())
 }
 
 func LoadCiphertextProof(filename string) (*CiphertextProof, error) {
 	var scp SerializableCiphertextProof
-	if err := LoadFromFile(filename, &scp); err != nil {
+	if err := utilities.LoadFromFile(filename, &scp); err != nil {
 		return nil, err
 	}
 	return scp.ToOriginal()
 }
 
 func SaveVerificationParams(filename string, vp *VerificationParams) error {
-	return SaveToFile(filename, vp.ToSerializable())
+	return utilities.SaveToFile(filename, vp.ToSerializable())
 }
 
 func LoadVerificationParams(filename string) (*VerificationParams, error) {
 	var svp SerializableVerificationParams
-	if err := LoadFromFile(filename, &svp); err != nil {
+	if err := utilities.LoadFromFile(filename, &svp); err != nil {
 		return nil, err
 	}
 	return svp.ToOriginal()
@@ -492,26 +482,26 @@ func LoadVerificationParams(filename string) (*VerificationParams, error) {
 
 func LoadAttributes(filename string) ([]string, error) {
 	var attrs []string
-	if err := LoadFromFile(filename, &attrs); err != nil {
+	if err := utilities.LoadFromFile(filename, &attrs); err != nil {
 		return nil, err
 	}
 	return attrs, nil
 }
 
 func SaveAttributes(filename string, attrs []string) error {
-	return SaveToFile(filename, attrs)
+	return utilities.SaveToFile(filename, attrs)
 }
 
 func LoadAccessPolicy(filename string) (*AccessPolicy, error) {
 	var sap SerializableAccessPolicy
-	if err := LoadFromFile(filename, &sap); err != nil {
+	if err := utilities.LoadFromFile(filename, &sap); err != nil {
 		return nil, err
 	}
 	return sap.ToOriginal(), nil
 }
 
 func SaveAccessPolicy(filename string, ap *AccessPolicy) error {
-	return SaveToFile(filename, ap.ToSerializable())
+	return utilities.SaveToFile(filename, ap.ToSerializable())
 }
 
 func LoadPlainFile(filename string) ([]byte, error) {
@@ -693,13 +683,13 @@ func (sn *SerializableNode) ToOriginal() (*Node, error) {
 // SaveAccessTree saves an AccessTree to a file
 func SaveAccessTree(filename string, tree AccessTree) error {
 	serializable := tree.ToSerializable()
-	return SaveToFile(filename, serializable)
+	return utilities.SaveToFile(filename, serializable)
 }
 
 // LoadAccessTree loads an AccessTree from a file
 func LoadAccessTree(filename string) (AccessTree, error) {
 	var sn SerializableNode
-	if err := LoadFromFile(filename, &sn); err != nil {
+	if err := utilities.LoadFromFile(filename, &sn); err != nil {
 		return nil, err
 	}
 	return sn.ToOriginal()

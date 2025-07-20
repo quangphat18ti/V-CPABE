@@ -34,14 +34,14 @@ func TestVerifyCiphertextSuccessFull(t *testing.T) {
 	}
 
 	verifyParams := VerifyCiphertextParams{
-		pk:           *pk,
-		ciphertext:   *ciphertext,
-		proof:        *proof,
-		accessPolicy: *accessPolicy,
+		PublicKey:    *pk,
+		Ciphertext:   *ciphertext,
+		Proof:        *proof,
+		AccessPolicy: *accessPolicy,
 	}
 	ok, err := scheme.VerifyCiphertext(verifyParams)
 	if err != nil {
-		t.Errorf("Failed to verify ciphertext: %v", err)
+		t.Errorf("Failed to verify Ciphertext: %v", err)
 	}
 	if !ok {
 		t.Errorf("Ciphertext verification failed, expected success")
