@@ -9,7 +9,7 @@ type KeyGenParams struct {
 	PublicKeyPath       string `default:"out/utils/public_key"`
 	MasterSecretKeyPath string `default:"out/utils/master_secret_key"`
 	AttributePath       string `default:"in/utils/attributes"`
-	UserPrivateKeyPath  string `default:"out/utils/private_key"`
+	UserPrivateKeyPath  string `default:"out/keys/private_key"`
 	PrivateKeyProofPath string `default:"out/keys/key_proof"`
 }
 
@@ -34,7 +34,7 @@ type EncryptResponse struct {
 type DecryptParams struct {
 	PublicKeyPath      string `default:"out/utils/public_key"`
 	UserPrivateKeyPath string `default:"out/keys/private_key"`
-	CipherTextPath     string `default:"out/utils/ciphertext"`
+	CipherTextPath     string `default:"out/ciphertexts/ciphertext"`
 	DecryptedFilePath  string `default:"out/files/decrypted_file.txt"`
 }
 
@@ -53,4 +53,5 @@ type VerifyCiphertextParams struct {
 	PublicKeyPath       string `default:"out/utils/public_key"`
 	CipherTextPath      string `default:"out/ciphertexts/ciphertext"`
 	CipherTextProofPath string `default:"out/ciphertexts/ciphertext_proof"`
+	AccessPolicyPath    string `default:"in/utils/access_policy"`
 }

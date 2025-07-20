@@ -233,10 +233,17 @@ func (B BSW07Demo) VerifyCiphertext(verifyCiphertextParams VABE.VerifyCiphertext
 		return false
 	}
 
+	accessPolicy, err := models.LoadAccessPolicy(verifyCiphertextParams.AccessPolicyPath)
+	if err != nil {
+		fmt.Printf("Error loading access policy: %s", err)
+		return false
+	}
+
 	valid, err := B.scheme.VerifyCiphertext(VerifyCiphertextParams{
-		PublicKey:  *publicKey,
-		Ciphertext: *ciphertext,
-		Proof:      *proof,
+		PublicKey:    *publicKey,
+		Ciphertext:   *ciphertext,
+		Proof:        *proof,
+		AccessPolicy: *accessPolicy,
 	})
 
 	if err != nil {
