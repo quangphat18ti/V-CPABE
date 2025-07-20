@@ -41,3 +41,10 @@ type DecryptParams struct {
 type DecryptResponse struct {
 	DecryptedFilePath string `default:"out/files/decrypted_file.txt"`
 }
+
+type VerifyKeyParams struct {
+	PublicKeyPath       string `default:"out/utils/public_key"`
+	UserPrivateKeyPath  string `default:"out/utils/user_private_key"`
+	PrivateKeyProofPath string `default:"out/utils/private_key_proof"`
+	UserAttributesPath  string `default:"in/utils/attributes"`
+}

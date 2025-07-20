@@ -171,6 +171,48 @@ func (B BSW07Demo) Decrypt(decryptParams VABE.DecryptParams) (VABE.DecryptRespon
 	return response, nil
 }
 
+func (B BSW07Demo) VerifyKey(verifyKeyParams VABE.VerifyKeyParams) bool {
+	defaults.SetDefaults(&verifyKeyParams)
+
+	publicKey, err := models.LoadPublicKey(verifyKeyParams.PublicKeyPath)
+	if err != nil {
+		fmt.Println("Error loading public key:", err)
+		return false
+	}
+
+	userPrivateKey, err := models.LoadSecretKey(verifyKeyParams.UserPrivateKeyPath)
+	if err != nil {
+		fmt.Println("Error loading user private key:", err)
+		return false
+	}
+
+	privateKeyProof, err := models.LoadPrivateKeyProof(verifyKeyParams.PrivateKeyProofPath)
+	if err != nil {
+		fmt.Println("Error loading private key proof:", err)
+		return false
+	}
+
+	userAttributes, err := models.LoadAttributes(verifyKeyParams.UserAttributesPath)
+	if err != nil {
+		fmt.Println("Error loading user attributes:", err)
+		return false
+	}
+
+	valid, err := B.scheme.VerifyKey(VerifyKeyParams{
+		pk:             *publicKey,
+		sk:             *userPrivateKey,
+		keyProof:       *privateKeyProof,
+		userAttributes: userAttributes,
+	})
+	if err != nil {
+		fmt.Println("Verification Error:", err)
+		return false
+	}
+
+	fmt.Println("Verification Result:", valid)
+	return valid
+}
+
 func NewBSW07Demo(verbose bool) *BSW07Demo {
 	return &BSW07Demo{
 		Verbose: verbose,

@@ -50,7 +50,7 @@ func (scheme *BSW07S) KeyGen(msk models.MasterSecretKey, pk models.PublicKey, us
 
 		attrHashR := new(bn256.G1).ScalarMult(attrHash, rAttr)
 
-		// k_attr1 = g1^r * H(attr)^r_attr
+		// k_attr1 = g1^r * H(attr)^d
 		kAttr1 := new(bn256.G1).Add(g1R, attrHashR)
 
 		// k_attr2 = g2^r_attr
@@ -72,24 +72,14 @@ func (scheme *BSW07S) KeyGen(msk models.MasterSecretKey, pk models.PublicKey, us
 		V: bn256.Pair(g1R, pk.G2),
 	}
 
-	for _, attr := range userAttributes {
-		hAttr, err := scheme.hashToG1([]byte(attr))
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to hash attribute %s to G1: %w", attr, err)
-		}
-
-		k1 := new(bn256.G1).ScalarMult(hAttr, msk.Beta)
-		k2 := new(bn256.G2).ScalarMult(pk.H, msk.Beta)
-
-		sk.K[attr] = &models.AttributeKey{
-			K1: k1,
-			K2: k2,
+	if scheme.Verbose {
+		fmt.Println("Verifying generated keys...")
+		if verified, _ := scheme.VerifyKey(VerifyKeyParams{pk, *sk, *proof, userAttributes}); verified {
+			fmt.Println("✓ Secret key verification passed")
+		} else {
+			fmt.Println("✗ Secret key verification failed")
 		}
 	}
 
 	return sk, proof, nil
-}
-
-func (scheme *BSW07S) VerifyKey(pk models.PublicKey, sk models.SecretKey, proof models.SecretKeyProof) (bool, error) {
-	panic("implement me")
 }

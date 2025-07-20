@@ -16,7 +16,7 @@ func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("======= Help =======")
 		fmt.Println("Usage: cpabe <operation>")
-		fmt.Println("Available operations: setup, keygen, encrypt, decrypt")
+		fmt.Println("Available operations: setup, keygen, encrypt, decrypt, verify_key")
 		fmt.Println("====================")
 		return
 	}
@@ -50,5 +50,12 @@ func main() {
 			return
 		}
 		fmt.Println("Decryption completed successfully.")
+	case "verify_key":
+		ok := cpabe.VerifyKey(VABE.VerifyKeyParams{})
+		if !ok {
+			fmt.Println("Key verification failed.")
+			return
+		}
+		fmt.Println("Key verification succeeded.")
 	}
 }
