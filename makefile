@@ -1,7 +1,7 @@
 .PHONY: all build clean setup keygen encrypt decrypt verify-key verify-ciphertext
 
 BINDIR := bin
-TOOLS := setup key_generator encryptor decryptor
+TOOLS := setup key_generator encryptor decryptor create_policy
 
 # Default target - run the full flow demo
 all: build
@@ -21,6 +21,7 @@ all: build
 # Build all binaries
 build: $(TOOLS)
 	@echo "Building tools..."
+	@go mod tidy
 	@mkdir -p $(BINDIR)
 	@for tool in $(TOOLS); do \
 		go build -o $(BINDIR)/$$tool cmd/$$tool/main.go; \

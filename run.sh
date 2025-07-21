@@ -7,12 +7,13 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 BINDIR="bin"
-TOOLS=("setup" "key_generator" "encryptor" "decryptor")
+TOOLS=("setup" "key_generator" "encryptor" "decryptor" "create_policy")
 
 # Function to build all tools
 function build {
   echo -e "${BLUE}Building tools...${NC}"
   mkdir -p $BINDIR
+  go mod tidy
 
   for tool in "${TOOLS[@]}"; do
     echo -e "Building $tool..."
