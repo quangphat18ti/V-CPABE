@@ -14,29 +14,27 @@ import (
 type SerializablePublicKey struct {
 	G1       []byte `json:"g1"`
 	G2       []byte `json:"g2"`
-	H        []byte `json:"h"`
+	G1A      []byte `json:"g1a"`
 	EggAlpha []byte `json:"egg_alpha"`
 }
 
 type SerializableMasterSecretKey struct {
-	Beta    []byte `json:"beta"`
-	G1Alpha []byte `json:"g1_alpha"`
+	Alpha []byte `json:"alpha"`
+	G2A   []byte `json:"g2_a"`
 }
 
 type SerializableAttributeKey struct {
 	K1 []byte `json:"k1"`
-	K2 []byte `json:"k2"`
 }
 
 type SerializableSecretKey struct {
 	AttrList []string                             `json:"attr_list"`
 	K0       []byte                               `json:"k0"`
+	L        []byte                               `json:"l"` // L = g2^t
 	K        map[string]*SerializableAttributeKey `json:"k"`
 }
 
-type SerializableSecretKeyProof struct {
-	V []byte `json:"v"`
-}
+type SerializableSecretKeyProof struct{}
 
 type SerializableAttributeCiphertext struct {
 	C1 []byte `json:"c1"`
@@ -53,9 +51,10 @@ type SerializableCiphertext struct {
 }
 
 type SerializableCiphertextProof struct {
-	CommitRootSecretG1            []byte   `json:"commit_root_secret_g1"`
-	CommitShareSecretInnerNodesG2 [][]byte `json:"commit_share_secret_inner_nodes_g2"`
-	CommitAllPolynomialG2         [][]byte `json:"commit_all_polynomial_g2"`
+	CommitRootSecretG2     []byte                             `json:"commit_root_secret_g2"`
+	InnerNodeCiphertexts   []*SerializableAttributeCiphertext `json:"inner_node_ciphertexts"`
+	EggCommitAllPolynomial [][]byte                           `json:"egg_commit_all_polynomial"`
+	EggASecret             []byte                             `json:"egg_a_secret"`
 }
 
 type SerializableVerificationParams struct {
@@ -69,22 +68,21 @@ func (pk *PublicKey) ToSerializable() *SerializablePublicKey {
 	return &SerializablePublicKey{
 		G1:       pk.G1.Marshal(),
 		G2:       pk.G2.Marshal(),
-		H:        pk.H.Marshal(),
+		G1A:      pk.G1A.Marshal(),
 		EggAlpha: pk.EggAlpha.Marshal(),
 	}
 }
 
 func (msk *MasterSecretKey) ToSerializable() *SerializableMasterSecretKey {
 	return &SerializableMasterSecretKey{
-		Beta:    msk.Beta.Bytes(),
-		G1Alpha: msk.G1Alpha.Marshal(),
+		Alpha: msk.Alpha.Bytes(),
+		G2A:   msk.G2A.Marshal(),
 	}
 }
 
 func (ak *AttributeKey) ToSerializable() *SerializableAttributeKey {
 	return &SerializableAttributeKey{
 		K1: ak.K1.Marshal(),
-		K2: ak.K2.Marshal(),
 	}
 }
 
@@ -97,14 +95,13 @@ func (sk *SecretKey) ToSerializable() *SerializableSecretKey {
 	return &SerializableSecretKey{
 		AttrList: sk.AttrList,
 		K0:       sk.K0.Marshal(),
+		L:        sk.L.Marshal(),
 		K:        serialK,
 	}
 }
 
 func (skp *SecretKeyProof) ToSerializable() *SerializableSecretKeyProof {
-	return &SerializableSecretKeyProof{
-		V: skp.V.Marshal(),
-	}
+	return &SerializableSecretKeyProof{}
 }
 
 func (ac *AttributeCiphertext) ToSerializable() *SerializableAttributeCiphertext {
@@ -121,7 +118,7 @@ func (ct *Ciphertext) ToSerializable() *SerializableCiphertext {
 	}
 
 	return &SerializableCiphertext{
-		RandGT:        ct.RandGT.Marshal(),
+		//RandGT:        ct.RandGT.Marshal(),
 		EncryptedData: ct.EncryptedData,
 		Policy:        ct.Policy,
 		C0:            ct.C0.Marshal(),
@@ -132,14 +129,14 @@ func (ct *Ciphertext) ToSerializable() *SerializableCiphertext {
 
 func (cp *CiphertextProof) ToSerializable() *SerializableCiphertextProof {
 	// Convert InnerNodeCiphertexts
-	commitShareSecret := make([][]byte, len(cp.CommitShareSecretInnerNodesG2))
-	for i, commit := range cp.CommitShareSecretInnerNodesG2 {
-		commitShareSecret[i] = commit.Marshal()
+	serialC := make([]*SerializableAttributeCiphertext, len(cp.InnerNodeCiphertexts))
+	for i, attrCt := range cp.InnerNodeCiphertexts {
+		serialC[i] = attrCt.ToSerializable()
 	}
 
 	// Convert EggCommitAllPolynomial (2D slice)
 	commitAllPoly := make([][]byte, 0)
-	for _, polyGroup := range cp.CommitAllPolynomialG2 {
+	for _, polyGroup := range cp.EggCommitAllPolynomial {
 		polyBytes := make([]byte, 0)
 		for _, poly := range polyGroup {
 			polyBytes = slices.Concat(polyBytes, poly.Marshal())
@@ -148,9 +145,10 @@ func (cp *CiphertextProof) ToSerializable() *SerializableCiphertextProof {
 	}
 
 	return &SerializableCiphertextProof{
-		CommitRootSecretG1:            cp.CommitRootSecretG1.Marshal(),
-		CommitShareSecretInnerNodesG2: commitShareSecret,
-		CommitAllPolynomialG2:         commitAllPoly,
+		CommitRootSecretG2:     cp.CommitRootSecretG2.Marshal(),
+		InnerNodeCiphertexts:   serialC,
+		EggCommitAllPolynomial: commitAllPoly,
+		EggASecret:             cp.EggASecret.Marshal(),
 	}
 }
 
@@ -190,8 +188,8 @@ func (spk *SerializablePublicKey) ToOriginal() (*PublicKey, error) {
 	}
 
 	// Unmarshal G1A
-	pk.H = new(bn256.G2)
-	if _, err := pk.H.Unmarshal(spk.H); err != nil {
+	pk.G1A = new(bn256.G1)
+	if _, err := pk.G1A.Unmarshal(spk.G1A); err != nil {
 		return nil, err
 	}
 
@@ -208,11 +206,11 @@ func (smsk *SerializableMasterSecretKey) ToOriginal() (*MasterSecretKey, error) 
 	msk := &MasterSecretKey{}
 
 	// Convert Alpha
-	msk.Beta = new(big.Int).SetBytes(smsk.Beta)
+	msk.Alpha = new(big.Int).SetBytes(smsk.Alpha)
 
 	// Unmarshal G2A
-	msk.G1Alpha = new(bn256.G1)
-	if _, err := msk.G1Alpha.Unmarshal(smsk.G1Alpha); err != nil {
+	msk.G2A = new(bn256.G2)
+	if _, err := msk.G2A.Unmarshal(smsk.G2A); err != nil {
 		return nil, err
 	}
 
@@ -228,12 +226,6 @@ func (sak *SerializableAttributeKey) ToOriginal() (*AttributeKey, error) {
 		return nil, err
 	}
 
-	// Unmarshal K2
-	ak.K2 = new(bn256.G2)
-	if _, err := ak.K2.Unmarshal(sak.K2); err != nil {
-		return nil, err
-	}
-
 	return ak, nil
 }
 
@@ -244,7 +236,7 @@ func (ssk *SerializableSecretKey) ToOriginal() (*SecretKey, error) {
 	sk.AttrList = ssk.AttrList
 
 	// Unmarshal K0
-	sk.K0 = new(bn256.G1)
+	sk.K0 = new(bn256.G2)
 	if _, err := sk.K0.Unmarshal(ssk.K0); err != nil {
 		return nil, err
 	}
@@ -259,18 +251,17 @@ func (ssk *SerializableSecretKey) ToOriginal() (*SecretKey, error) {
 		sk.K[attr] = attrKey
 	}
 
+	// Convert L
+	sk.L = new(bn256.G2)
+	if _, err := sk.L.Unmarshal(ssk.L); err != nil {
+		return nil, err
+	}
+
 	return sk, nil
 }
 
 func (sskp *SerializableSecretKeyProof) ToOriginal() (*SecretKeyProof, error) {
 	skp := &SecretKeyProof{}
-
-	// Unmarshal V
-	skp.V = new(bn256.GT)
-	if _, err := skp.V.Unmarshal(sskp.V); err != nil {
-		return nil, err
-	}
-
 	return skp, nil
 }
 
@@ -278,13 +269,13 @@ func (sac *SerializableAttributeCiphertext) ToOriginal() (*AttributeCiphertext, 
 	ac := &AttributeCiphertext{}
 
 	// Unmarshal C1
-	ac.C1 = new(bn256.G2)
+	ac.C1 = new(bn256.G1)
 	if _, err := ac.C1.Unmarshal(sac.C1); err != nil {
 		return nil, err
 	}
 
 	// Unmarshal C2
-	ac.C2 = new(bn256.G1)
+	ac.C2 = new(bn256.G2)
 	if _, err := ac.C2.Unmarshal(sac.C2); err != nil {
 		return nil, err
 	}
@@ -302,7 +293,7 @@ func (sct *SerializableCiphertext) ToOriginal() (*Ciphertext, error) {
 	ct.Policy = sct.Policy
 
 	// Unmarshal C0
-	ct.C0 = new(bn256.G2)
+	ct.C0 = new(bn256.G1)
 	if _, err := ct.C0.Unmarshal(sct.C0); err != nil {
 		return nil, err
 	}
@@ -330,18 +321,20 @@ func (scp *SerializableCiphertextProof) ToOriginal() (*CiphertextProof, error) {
 	cp := &CiphertextProof{}
 
 	// Unmarshal CommitRootSecretG2
-	cp.CommitRootSecretG1 = new(bn256.G1)
-	if _, err := cp.CommitRootSecretG1.Unmarshal(scp.CommitRootSecretG1); err != nil {
+	cp.CommitRootSecretG2 = new(bn256.G2)
+	if _, err := cp.CommitRootSecretG2.Unmarshal(scp.CommitRootSecretG2); err != nil {
 		return nil, err
 	}
 
 	// Unmarshal InnerNodeCiphertexts
-	cp.CommitShareSecretInnerNodesG2 = make([]*bn256.G2, len(scp.CommitShareSecretInnerNodesG2))
-	for i, commitData := range scp.CommitShareSecretInnerNodesG2 {
-		cp.CommitShareSecretInnerNodesG2[i] = new(bn256.G2)
-		if _, err := cp.CommitShareSecretInnerNodesG2[i].Unmarshal(commitData); err != nil {
-			return nil, err
+	cp.InnerNodeCiphertexts = make([]AttributeCiphertext, len(scp.InnerNodeCiphertexts))
+	for i, commitData := range scp.InnerNodeCiphertexts {
+		cp.InnerNodeCiphertexts[i] = AttributeCiphertext{}
+		origin, err := commitData.ToOriginal()
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert InnerNodeCiphertexts[%d]: %v", i, err)
 		}
+		cp.InnerNodeCiphertexts[i] = *origin
 	}
 
 	// Note: EggCommitAllPolynomial reconstruction depends on your specific structure
@@ -349,22 +342,29 @@ func (scp *SerializableCiphertextProof) ToOriginal() (*CiphertextProof, error) {
 
 	// Each value is a 256-bit number.
 	//const numBytes = 256 / 8 * 4 // 256 bits = 32 bytes, 4 values = 128 bytes
-	const eachPointSize = (256/8)*4 + 1
+	//const eachPointSize = (256/8)*4 + 1
+	var eachPointSize int = len(new(bn256.GT).Marshal())
 
-	numGroups := len(scp.CommitAllPolynomialG2)
-	cp.CommitAllPolynomialG2 = make([][]*bn256.G2, numGroups)
+	numGroups := len(scp.EggCommitAllPolynomial)
+	cp.EggCommitAllPolynomial = make([][]*bn256.GT, numGroups)
 	for i := 0; i < numGroups; i++ {
-		elementOfGroups := len(scp.CommitAllPolynomialG2[i]) / eachPointSize // Assuming each group has 32 elements
-		cp.CommitAllPolynomialG2[i] = make([]*bn256.G2, elementOfGroups)
+		elementOfGroups := len(scp.EggCommitAllPolynomial[i]) / eachPointSize // Assuming each group has 32 elements
+		cp.EggCommitAllPolynomial[i] = make([]*bn256.GT, elementOfGroups)
 		for j := 0; j < elementOfGroups; j++ {
-			cp.CommitAllPolynomialG2[i][j] = new(bn256.G2)
+			cp.EggCommitAllPolynomial[i][j] = new(bn256.GT)
 			start := j * eachPointSize
 			end := start + eachPointSize
-			bytes := scp.CommitAllPolynomialG2[i][start:end]
-			if _, err := cp.CommitAllPolynomialG2[i][j].Unmarshal(bytes); err != nil {
+			bytes := scp.EggCommitAllPolynomial[i][start:end]
+			if _, err := cp.EggCommitAllPolynomial[i][j].Unmarshal(bytes); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal EggCommitAllPolynomial[%d][%d]: %v", i, j, err)
 			}
 		}
+	}
+
+	// Unmarshal EggASecret
+	cp.EggASecret = new(bn256.GT)
+	if _, err := cp.EggASecret.Unmarshal(scp.EggASecret); err != nil {
+		return nil, err
 	}
 
 	return cp, nil
@@ -537,160 +537,4 @@ type SerializableInnerCipher struct {
 type SerializableLeafCipher struct {
 	CommitShareSecretG2  []byte `json:"commit_share_secret_g2"`
 	HashPowShareSecretG1 []byte `json:"hash_pow_share_secret_g1"`
-}
-
-// ToSerializable converts a Node to its serializable version
-func (n *Node) ToSerializable() *SerializableNode {
-	if n == nil {
-		return nil
-	}
-
-	sn := &SerializableNode{
-		Type:      n.Type,
-		Attribute: n.Attribute,
-		Index:     n.Index,
-		Threshold: n.Threshold,
-		IsLeaf:    n.IsLeaf,
-	}
-
-	// Convert Secrete
-	secreteInt := big.Int(n.Secrete)
-	sn.Secrete = secreteInt.Bytes()
-
-	// Convert Children
-	if len(n.Children) > 0 {
-		sn.Children = make([]*SerializableNode, len(n.Children))
-		for i, child := range n.Children {
-			sn.Children[i] = child.ToSerializable()
-		}
-	}
-
-	// Convert Polynomial
-	if len(n.Polynomial) > 0 {
-		sn.Polynomial = make([]string, len(n.Polynomial))
-		for i, p := range n.Polynomial {
-			sn.Polynomial[i] = p.String()
-		}
-	}
-
-	// Convert InnerCipher
-	if n.InnerCipher != nil {
-		sn.InnerCipher = &SerializableInnerCipher{
-			CommitShareSecretG2: n.InnerCipher.CommitShareSecretG2.Marshal(),
-		}
-
-		if len(n.InnerCipher.CommitPolynomialCoeffG2) > 0 {
-			sn.InnerCipher.CommitPolynomialCoeffG2 = make([][]byte, len(n.InnerCipher.CommitPolynomialCoeffG2))
-			for i, c := range n.InnerCipher.CommitPolynomialCoeffG2 {
-				sn.InnerCipher.CommitPolynomialCoeffG2[i] = c.Marshal()
-			}
-		}
-	}
-
-	// Convert LeafCipher
-	if n.LeafCipher != nil {
-		sn.LeafCipher = &SerializableLeafCipher{
-			CommitShareSecretG2:  n.LeafCipher.CommitShareSecretG2.Marshal(),
-			HashPowShareSecretG1: n.LeafCipher.HashPowShareSecretG1.Marshal(),
-		}
-	}
-
-	return sn
-}
-
-// ToOriginal converts a SerializableNode back to a Node
-func (sn *SerializableNode) ToOriginal() (*Node, error) {
-	if sn == nil {
-		return nil, nil
-	}
-
-	n := &Node{
-		Type:      sn.Type,
-		Attribute: sn.Attribute,
-		Index:     sn.Index,
-		Threshold: sn.Threshold,
-		IsLeaf:    sn.IsLeaf,
-	}
-
-	// Convert Secrete
-	if sn.Secrete != nil {
-		secreteInt := new(big.Int).SetBytes(sn.Secrete)
-		n.Secrete = Secrete(*secreteInt)
-	}
-
-	// Convert Children
-	if len(sn.Children) > 0 {
-		n.Children = make([]*Node, len(sn.Children))
-		for i, child := range sn.Children {
-			var err error
-			n.Children[i], err = child.ToOriginal()
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	// Convert Polynomial
-	if len(sn.Polynomial) > 0 {
-		n.Polynomial = make([]big.Int, len(sn.Polynomial))
-		for i, p := range sn.Polynomial {
-			if _, ok := n.Polynomial[i].SetString(p, 10); !ok {
-				return nil, fmt.Errorf("failed to parse polynomial coefficient: %s", p)
-			}
-		}
-	}
-
-	// Convert InnerCipher
-	if sn.InnerCipher != nil {
-		n.InnerCipher = &InnerNodeCiphertext{
-			CommitShareSecretG2: new(bn256.G2),
-		}
-
-		if _, err := n.InnerCipher.CommitShareSecretG2.Unmarshal(sn.InnerCipher.CommitShareSecretG2); err != nil {
-			return nil, err
-		}
-
-		if len(sn.InnerCipher.CommitPolynomialCoeffG2) > 0 {
-			n.InnerCipher.CommitPolynomialCoeffG2 = make([]*bn256.G2, len(sn.InnerCipher.CommitPolynomialCoeffG2))
-			for i, c := range sn.InnerCipher.CommitPolynomialCoeffG2 {
-				n.InnerCipher.CommitPolynomialCoeffG2[i] = new(bn256.G2)
-				if _, err := n.InnerCipher.CommitPolynomialCoeffG2[i].Unmarshal(c); err != nil {
-					return nil, err
-				}
-			}
-		}
-	}
-
-	// Convert LeafCipher
-	if sn.LeafCipher != nil {
-		n.LeafCipher = &LeafNodeCiphertext{
-			CommitShareSecretG2:  new(bn256.G2),
-			HashPowShareSecretG1: new(bn256.G1),
-		}
-
-		if _, err := n.LeafCipher.CommitShareSecretG2.Unmarshal(sn.LeafCipher.CommitShareSecretG2); err != nil {
-			return nil, err
-		}
-
-		if _, err := n.LeafCipher.HashPowShareSecretG1.Unmarshal(sn.LeafCipher.HashPowShareSecretG1); err != nil {
-			return nil, err
-		}
-	}
-
-	return n, nil
-}
-
-// SaveAccessTree saves an AccessTree to a file
-func SaveAccessTree(filename string, tree AccessTree) error {
-	serializable := tree.ToSerializable()
-	return utilities.SaveToFile(filename, serializable)
-}
-
-// LoadAccessTree loads an AccessTree from a file
-func LoadAccessTree(filename string) (AccessTree, error) {
-	var sn SerializableNode
-	if err := utilities.LoadFromFile(filename, &sn); err != nil {
-		return nil, err
-	}
-	return sn.ToOriginal()
 }

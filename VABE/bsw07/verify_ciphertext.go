@@ -76,24 +76,24 @@ func (scheme *BSW07S) verifyCTNumComponents(ciphertext models.Ciphertext, proof 
 }
 
 func (scheme *BSW07S) verifyCTUsingSameS(ciphertext models.Ciphertext, pk models.PublicKey, proof models.CiphertextProof) error {
-	// e(CommitRootSecretG1, g2) = e(g1, Ciphertext.CommitShareSecretInnerNodesG2[0])
+	// e(CommitRootSecretG2, g2) = e(g1, Ciphertext.InnerNodeCiphertexts[0])
 	left := bn256.Pair(proof.CommitRootSecretG1, pk.G2)
 	right := bn256.Pair(pk.G1, proof.CommitShareSecretInnerNodesG2[0])
 	if !utilities.CompareGTByString(left, right) {
 		if scheme.Verbose {
-			fmt.Println("Verification failed: e(CommitRootSecretG1, g2) does not equal e(g1, Ciphertext.CommitShareSecretInnerNodesG2[0])")
+			fmt.Println("Verification failed: e(CommitRootSecretG2, g2) does not equal e(g1, Ciphertext.InnerNodeCiphertexts[0])")
 		}
-		return fmt.Errorf("e(CommitRootSecretG1, g2) does not equal e(g1, Ciphertext.CommitShareSecretInnerNodesG2[0])")
+		return fmt.Errorf("e(CommitRootSecretG2, g2) does not equal e(g1, Ciphertext.InnerNodeCiphertexts[0])")
 	}
 
-	// e(CommitRootSecretG1, h) = e(g1, Ciphertext.C0)
+	// e(CommitRootSecretG2, h) = e(g1, Ciphertext.C0)
 	left = bn256.Pair(proof.CommitRootSecretG1, pk.H)
 	right = bn256.Pair(pk.G1, ciphertext.C0)
 	if !utilities.CompareGTByString(left, right) {
 		if scheme.Verbose {
-			fmt.Println("Verification failed: e(CommitRootSecretG1, h) does not equal e(g1, Ciphertext.C0)")
+			fmt.Println("Verification failed: e(CommitRootSecretG2, h) does not equal e(g1, Ciphertext.C0)")
 		}
-		return fmt.Errorf("e(CommitRootSecretG1, h) does not equal e(g1, Ciphertext.C0)")
+		return fmt.Errorf("e(CommitRootSecretG2, h) does not equal e(g1, Ciphertext.C0)")
 	}
 
 	return nil
@@ -139,7 +139,7 @@ func (scheme *BSW07S) verifyInnerNodes(ciphertext *models.Ciphertext, pk *models
 		return root.LeafCipher.CommitShareSecretG2, nil
 	}
 
-	// C(child_u) = C(u) x (CommitAllPolynomialG2[i]^[index(u)^i]
+	// C(child_u) = C(u) x (EggCommitAllPolynomial[i]^[index(u)^i]
 	E := proof.CommitAllPolynomialG2[*i]
 	c := proof.CommitShareSecretInnerNodesG2[*i]
 	E[0] = c

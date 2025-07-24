@@ -1,8 +1,9 @@
-package bsw07
+package waters11
 
 import (
-	"cpabe-prototype/VABE/bsw07/models"
+	"cpabe-prototype/VABE/waters11/models"
 	"cpabe-prototype/pkg/utilities"
+	"errors"
 	"fmt"
 	"github.com/cloudflare/bn256"
 )
@@ -14,7 +15,7 @@ type VerifyKeyParams struct {
 	UserAttributes []string
 }
 
-func (scheme *BSW07S) VerifyKey(params VerifyKeyParams) (bool, error) {
+func (scheme *Waters11) VerifyKey(params VerifyKeyParams) (bool, error) {
 	if scheme.Verbose {
 		fmt.Println("Verifying secret key...")
 	}
@@ -25,7 +26,7 @@ func (scheme *BSW07S) VerifyKey(params VerifyKeyParams) (bool, error) {
 	}
 
 	// Verify the K0 in the secret key
-	ok := scheme.verifyK0ConstructWithAlphaBeta(params.PublicKey, params.SecretKey, params.KeyProof)
+	ok := scheme.verifyK0ConstructWithAAndAlpha(params.PublicKey, params.SecretKey, params.KeyProof)
 	if !ok {
 		return false, fmt.Errorf("K0 does not match the expected value based on alpha and beta")
 	}
@@ -39,7 +40,14 @@ func (scheme *BSW07S) VerifyKey(params VerifyKeyParams) (bool, error) {
 	return ok, nil
 }
 
-func (scheme *BSW07S) verifyNumComponents(sk models.SecretKey, attributes []string) (bool, error) {
+func (scheme *Waters11) verifyNumComponents(sk models.SecretKey, attributes []string) (bool, error) {
+	if sk.K0 == nil {
+		return false, errors.New("K0 cannot be nil")
+	}
+	if sk.L == nil {
+		return false, errors.New("L cannot be nil")
+	}
+
 	// Deep Compare two Arrays
 	ok := utilities.Equal(sk.AttrList, attributes)
 	if !ok {
@@ -70,10 +78,12 @@ func (scheme *BSW07S) verifyNumComponents(sk models.SecretKey, attributes []stri
 	return true, nil
 }
 
-func (scheme *BSW07S) verifyK0ConstructWithAlphaBeta(pk models.PublicKey, sk models.SecretKey, proof models.SecretKeyProof) bool {
-	// e(K0, G1A) should equal e(g1, g2)^alpha * Proof.V
-	left := bn256.Pair(sk.K0, pk.H)
-	right := new(bn256.GT).Add(pk.EggAlpha, proof.V)
+func (scheme *Waters11) verifyK0ConstructWithAAndAlpha(pk models.PublicKey, sk models.SecretKey, proof models.SecretKeyProof) bool {
+	// e(g1, K0) should equal e(g1^a, L) * e(g1, g2^alpha)
+	left := bn256.Pair(pk.G1, sk.K0)
+
+	eggaL := bn256.Pair(pk.G1A, sk.L)
+	right := new(bn256.GT).Add(eggaL, pk.EggAlpha)
 
 	if !utilities.CompareGTByString(left, right) {
 		if scheme.Verbose {
@@ -90,8 +100,8 @@ func (scheme *BSW07S) verifyK0ConstructWithAlphaBeta(pk models.PublicKey, sk mod
 	return true
 }
 
-func (scheme *BSW07S) verifyEachComponent(pk models.PublicKey, sk models.SecretKey, proof models.SecretKeyProof) bool {
-	//	for each component in K[]: e(K[attr].D1, g2) = e(G1A[attr], K[attr].D2) * Proof.V
+func (scheme *Waters11) verifyEachComponent(pk models.PublicKey, sk models.SecretKey, proof models.SecretKeyProof) bool {
+	//	for each component in K[]: e(Hash[attr], L) = e(K[attr].D1, g2)
 	for attr, key := range sk.K {
 		fmt.Printf("Verifying key for attribute %s\n", attr)
 		if key == nil {
@@ -101,8 +111,6 @@ func (scheme *BSW07S) verifyEachComponent(pk models.PublicKey, sk models.SecretK
 			return false
 		}
 
-		left := bn256.Pair(key.K1, pk.G2)
-
 		hashToG1, err := scheme.hashToG1([]byte(attr))
 		if err != nil {
 			if scheme.Verbose {
@@ -111,8 +119,8 @@ func (scheme *BSW07S) verifyEachComponent(pk models.PublicKey, sk models.SecretK
 			return false
 		}
 
-		right := bn256.Pair(hashToG1, key.K2)
-		right = new(bn256.GT).Add(right, proof.V)
+		left := bn256.Pair(hashToG1, sk.L)
+		right := bn256.Pair(key.K1, pk.G2)
 
 		if !utilities.CompareGTByString(left, right) {
 			if scheme.Verbose {

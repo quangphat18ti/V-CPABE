@@ -1,15 +1,14 @@
-package bsw07
+package waters11
 
 import (
-	"cpabe-prototype/VABE/bsw07/models"
+	"cpabe-prototype/VABE/waters11/models"
 	"crypto/rand"
 	"fmt"
 	"github.com/cloudflare/bn256"
-	"math/big"
 	"time"
 )
 
-func (scheme *BSW07S) KeyGen(msk models.MasterSecretKey, pk models.PublicKey, userAttributes []string) (*models.SecretKey, *models.SecretKeyProof, error) {
+func (scheme *Waters11) KeyGen(msk models.MasterSecretKey, pk models.PublicKey, userAttributes []string) (*models.SecretKey, *models.SecretKeyProof, error) {
 	start := time.Now()
 	defer func() {
 		fmt.Printf("KeyGen time: %v\n", time.Since(start))
@@ -24,54 +23,41 @@ func (scheme *BSW07S) KeyGen(msk models.MasterSecretKey, pk models.PublicKey, us
 		return nil, nil, fmt.Errorf("user attributes cannot be empty")
 	}
 
-	r, err := rand.Int(rand.Reader, bn256.Order)
+	t, err := rand.Int(rand.Reader, bn256.Order)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate random r: %w", err)
+		return nil, nil, fmt.Errorf("failed to generate random t: %w", err)
 	}
 
-	g1R := new(bn256.G1).ScalarMult(pk.G1, r)
-	betaInv := new(big.Int).ModInverse(msk.Beta, bn256.Order)
+	L := new(bn256.G2).ScalarMult(pk.G2, t)
 
-	// k0 = (g1^alpha * g1^r)^(1/beta)
-	temp := new(bn256.G1).Add(msk.G1Alpha, g1R)
-	k0 := new(bn256.G1).ScalarMult(temp, betaInv)
+	// k0 = g2^{alpha + a * t}
+	g2AT := new(bn256.G2).ScalarMult(msk.G2A, t)
+	g2Alpha := new(bn256.G2).ScalarMult(pk.G2, msk.Alpha)
+	k0 := new(bn256.G2).Add(g2Alpha, g2AT)
 
 	K := make(map[string]*models.AttributeKey)
 	for _, attr := range userAttributes {
-		rAttr, err := rand.Int(rand.Reader, bn256.Order)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to generate random r_attr for attribute %s: %w", attr, err)
-		}
-
 		// Hash attribute to G1
 		attrHash, err := scheme.hashToG1([]byte(attr))
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to hash attribute %s to G1: %w", attr, err)
 		}
 
-		attrHashR := new(bn256.G1).ScalarMult(attrHash, rAttr)
-
-		// k_attr1 = g1^r * G1A(attr)^d
-		kAttr1 := new(bn256.G1).Add(g1R, attrHashR)
-
-		// k_attr2 = g2^r_attr
-		kAttr2 := new(bn256.G2).ScalarMult(pk.G2, rAttr)
+		kAttr1 := new(bn256.G1).ScalarMult(attrHash, t)
 
 		K[attr] = &models.AttributeKey{
 			K1: kAttr1,
-			K2: kAttr2,
 		}
 	}
 
 	sk := &models.SecretKey{
 		AttrList: userAttributes,
 		K0:       k0,
+		L:        L,
 		K:        K,
 	}
 
-	proof := &models.SecretKeyProof{
-		V: bn256.Pair(g1R, pk.G2),
-	}
+	proof := &models.SecretKeyProof{}
 
 	//if scheme.Verbose {
 	//	fmt.Println("Verifying generated keys...")

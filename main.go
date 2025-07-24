@@ -2,14 +2,14 @@ package main
 
 import (
 	"cpabe-prototype/VABE"
-	"cpabe-prototype/VABE/bsw07"
+	"cpabe-prototype/VABE/waters11"
 	"fmt"
 	"os"
 	"time"
 )
 
 var (
-	cpabe = bsw07.NewBSW07Demo(false)
+	cpabe = waters11.NewWater11Demo(true)
 )
 
 // Demo function

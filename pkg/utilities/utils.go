@@ -73,8 +73,8 @@ func DeepEqual[T any](a, b []T) bool {
 }
 
 func CompareGTByString(a, b *bn256.GT) bool {
-	//return a.String() == b.String()
-	return bytes.Equal(a.Marshal(), b.Marshal())
+	return a.String() == b.String()
+	//return bytes.Equal(a.Marshal(), b.Marshal())
 }
 
 func CompareG2ByString(a, b *bn256.G2) bool {

@@ -143,7 +143,7 @@ func TestPublicKeySerialization(t *testing.T) {
 		t.Error("G2 values don't match")
 	}
 	if !(original.H.String() == restored.H.String()) {
-		t.Error("H values don't match")
+		t.Error("G1A values don't match")
 	}
 	if !(original.EggAlpha.String() == restored.EggAlpha.String()) {
 		t.Error("EggAlpha values don't match")
@@ -165,10 +165,10 @@ func TestMasterSecretKeySerialization(t *testing.T) {
 	}
 
 	if original.Beta.Cmp(restored.Beta) != 0 {
-		t.Error("Beta values don't match")
+		t.Error("Alpha values don't match")
 	}
 	if original.G1Alpha.String() != restored.G1Alpha.String() {
-		t.Error("G1Alpha values don't match")
+		t.Error("G2A values don't match")
 	}
 }
 
@@ -285,17 +285,17 @@ func TestCiphertextProofSerialization(t *testing.T) {
 	}
 
 	if original.CommitRootSecretG1.String() != restored.CommitRootSecretG1.String() {
-		t.Error("CommitRootSecretG1 values don't match")
+		t.Error("CommitRootSecretG2 values don't match")
 	}
 
 	if len(original.CommitShareSecretInnerNodesG2) != len(restored.CommitShareSecretInnerNodesG2) {
-		t.Error("CommitShareSecretInnerNodesG2 lengths don't match")
+		t.Error("InnerNodeCiphertexts lengths don't match")
 	}
 
 	for i, originalCommit := range original.CommitShareSecretInnerNodesG2 {
 		restoredCommit := restored.CommitShareSecretInnerNodesG2[i]
 		if originalCommit.String() != restoredCommit.String() {
-			t.Errorf("CommitShareSecretInnerNodesG2 values don't match at index %d", i)
+			t.Errorf("InnerNodeCiphertexts values don't match at index %d", i)
 		}
 	}
 
@@ -309,13 +309,13 @@ func TestCiphertextProofSerialization(t *testing.T) {
 	restoredFlat := restored.CommitAllPolynomialG2[0]
 
 	if len(originalFlat) != len(restoredFlat) {
-		t.Error("CommitAllPolynomialG2 flattened lengths don't match")
+		t.Error("EggCommitAllPolynomial flattened lengths don't match")
 	}
 
 	for i, originalPoly := range originalFlat {
 		restoredPoly := restoredFlat[i]
 		if originalPoly.String() != restoredPoly.String() {
-			t.Errorf("CommitAllPolynomialG2 values don't match at index %d", i)
+			t.Errorf("EggCommitAllPolynomial values don't match at index %d", i)
 		}
 	}
 }
@@ -339,7 +339,7 @@ func TestVerificationParamsSerialization(t *testing.T) {
 	}
 
 	if original.CiphertextProof.CommitRootSecretG1.String() != restored.CiphertextProof.CommitRootSecretG1.String() {
-		t.Error("CiphertextProof.CommitRootSecretG1 values don't match")
+		t.Error("CiphertextProof.CommitRootSecretG2 values don't match")
 	}
 }
 
@@ -387,7 +387,7 @@ func TestFileIO(t *testing.T) {
 		}
 
 		if original.Beta.Cmp(loaded.Beta) != 0 {
-			t.Error("Beta values don't match after file I/O")
+			t.Error("Alpha values don't match after file I/O")
 		}
 
 		os.Remove(filename)

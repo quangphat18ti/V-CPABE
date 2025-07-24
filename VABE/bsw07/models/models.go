@@ -35,7 +35,7 @@ type SecretKeyProof struct {
 
 // AttributeKey represents keys for each attribute
 type AttributeKey struct {
-	K1 *bn256.G1 // CommitShareSecretG2 = (g1^rand) * hash[attr]^rand
+	K1 *bn256.G1 // CommitRandomSecretG2 = (g1^rand) * hash[attr]^rand
 	K2 *bn256.G2 //  HashPowShareSecretG1 = g2^rand
 }
 
@@ -52,7 +52,7 @@ type Ciphertext struct {
 // AttributeCiphertext represents ciphertext components for each attribute
 type AttributeCiphertext struct {
 	C1 *bn256.G2 // C1 = g2^share
-	C2 *bn256.G1 // C2 = H[attr]^share
+	C2 *bn256.G1 // C2 = G1A[attr]^share
 }
 
 type CiphertextProof struct {
