@@ -2,8 +2,8 @@ package main
 
 import (
 	access_policy "cpabe-prototype/VABE/access-policy"
-	"cpabe-prototype/VABE/bsw07"
-	"cpabe-prototype/VABE/bsw07/models"
+	"cpabe-prototype/VABE/waters11"
+	"cpabe-prototype/VABE/waters11/models"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -11,6 +11,11 @@ import (
 	"path/filepath"
 
 	"github.com/mcuadros/go-defaults"
+)
+
+var (
+	scheme *waters11.Waters11
+	err    error
 )
 
 type DecryptParams struct {
@@ -90,13 +95,6 @@ func Decrypt(params DecryptParams) ([]byte, error) {
 		fmt.Println()
 	}
 
-	// Load the scheme
-	scheme, err := bsw07.LoadScheme(params.SchemePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load scheme: %v", err)
-	}
-	scheme.Verbose = params.Verbose
-
 	// Load the public key
 	publicKey, err := models.LoadPublicKey(params.PublicKeyPath)
 	if err != nil {
@@ -148,13 +146,6 @@ func VerifyKey(params DecryptParams) (bool, error) {
 		fmt.Println()
 	}
 
-	// Load the scheme
-	scheme, err := bsw07.LoadScheme(params.SchemePath)
-	if err != nil {
-		return false, fmt.Errorf("failed to load scheme: %v", err)
-	}
-	scheme.Verbose = params.Verbose
-
 	// Load the public key
 	publicKey, err := models.LoadPublicKey(params.PublicKeyPath)
 	if err != nil {
@@ -180,7 +171,7 @@ func VerifyKey(params DecryptParams) (bool, error) {
 	}
 
 	// Verify the key
-	isVerified, err := scheme.VerifyKey(bsw07.VerifyKeyParams{
+	isVerified, err := scheme.VerifyKey(waters11.VerifyKeyParams{
 		PublicKey:      *publicKey,
 		SecretKey:      *privateKey,
 		KeyProof:       *keyProof,
@@ -199,13 +190,6 @@ func VerifyCiphertext(params DecryptParams) (bool, error) {
 		fmt.Printf("  Access Policy Path: %s\n", params.AccessPolicyPath)
 		fmt.Println()
 	}
-
-	// Load the scheme
-	scheme, err := bsw07.LoadScheme(params.SchemePath)
-	if err != nil {
-		return false, fmt.Errorf("failed to load scheme: %v", err)
-	}
-	scheme.Verbose = params.Verbose
 
 	// Load the public key
 	publicKey, err := models.LoadPublicKey(params.PublicKeyPath)
@@ -237,7 +221,7 @@ func VerifyCiphertext(params DecryptParams) (bool, error) {
 	}
 
 	// Verify the ciphertext
-	isVerified, err := scheme.VerifyCiphertext(bsw07.VerifyCiphertextParams{
+	isVerified, err := scheme.VerifyCiphertext(waters11.VerifyCiphertextParams{
 		PublicKey:    *publicKey,
 		Ciphertext:   *ciphertext,
 		Proof:        *ciphertextProof,
@@ -252,6 +236,14 @@ func VerifyCiphertext(params DecryptParams) (bool, error) {
 
 func main() {
 	params := parseArgs()
+
+	// Load the scheme
+	scheme, err = waters11.LoadScheme(params.SchemePath)
+	scheme.Verbose = params.Verbose
+	if err != nil {
+		fmt.Printf("Failed to load scheme: %v\n", err)
+		os.Exit(1)
+	}
 
 	switch params.Mode {
 	case "decrypt":

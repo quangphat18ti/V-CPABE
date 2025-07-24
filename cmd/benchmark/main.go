@@ -95,14 +95,14 @@ func main() {
 
 func runBenchmark(size int, testsDir string, filePaths map[string]string) (BenchmarkResult, error) {
 	result := BenchmarkResult{Size: size}
-	benchmarkFilePath := filepath.Join(testsDir, strconv.Itoa(size), "benchmark_results.json")
-	existingResult, err := LoadBenchmarkParamsFromFile(benchmarkFilePath, size)
-	if err == nil {
-		fmt.Printf("Using existing benchmark results for size %d\n", size)
-		return *existingResult, nil
-	} else {
-		fmt.Printf("No existing benchmark results for size %d, running new benchmark...\n", size)
-	}
+	//benchmarkFilePath := filepath.Join(testsDir, strconv.Itoa(size), "benchmark_results.json")
+	//existingResult, err := LoadBenchmarkParamsFromFile(benchmarkFilePath, size)
+	//if err == nil {
+	//	fmt.Printf("Using existing benchmark results for size %d\n", size)
+	//	return *existingResult, nil
+	//} else {
+	//	fmt.Printf("No existing benchmark results for size %d, running new benchmark...\n", size)
+	//}
 
 	sizeDir := filepath.Join(testsDir, strconv.Itoa(size))
 

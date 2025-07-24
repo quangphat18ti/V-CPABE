@@ -3,7 +3,8 @@ package main
 import (
 	"bytes"
 	"cpabe-prototype/VABE/bsw07"
-	"cpabe-prototype/VABE/bsw07/models"
+	"cpabe-prototype/VABE/waters11"
+	"cpabe-prototype/VABE/waters11/models"
 	"flag"
 	"fmt"
 	"github.com/mcuadros/go-defaults"
@@ -12,7 +13,8 @@ import (
 )
 
 var (
-	scheme *bsw07.BSW07S
+	scheme *waters11.Waters11
+	err    error
 )
 
 type SchemeSetupParams struct {
@@ -62,7 +64,7 @@ func createScheme(params SchemeSetupParams) error {
 		fmt.Println()
 	}
 
-	scheme = bsw07.NewBSW07S(params.Verbose, params.Salt)
+	scheme = waters11.NewWaters11(params.Verbose, params.Salt)
 
 	if params.Verbose {
 		fmt.Printf("Created new BSW07 scheme\n")
@@ -73,7 +75,7 @@ func createScheme(params SchemeSetupParams) error {
 		return fmt.Errorf("failed to create directory: %v", err)
 	}
 
-	err = bsw07.SaveScheme(params.SchemePath, scheme)
+	err = waters11.SaveScheme(params.SchemePath, scheme)
 	if err != nil {
 		return fmt.Errorf("failed to save scheme: %v", err)
 	}
@@ -129,11 +131,6 @@ func setupScheme(params SchemeSetupParams) error {
 		return fmt.Errorf("failed to create directory for master secret key: %v", err)
 	}
 
-	scheme, err = bsw07.LoadScheme(params.SchemePath)
-	if err != nil {
-		return fmt.Errorf("failed to load scheme: %v", err)
-	}
-
 	publicKey, masterSecretKey, err := scheme.Setup()
 	if err != nil {
 		return fmt.Errorf("failed to setup scheme: %v", err)
@@ -159,13 +156,21 @@ func setupScheme(params SchemeSetupParams) error {
 func main() {
 	params := parseArgs()
 
-	err := createScheme(params)
+	err = createScheme(params)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 
 	fmt.Println()
+	// Load the scheme
+	scheme, err = waters11.LoadScheme(params.SchemePath)
+	scheme.Verbose = params.Verbose
+	if err != nil {
+		fmt.Printf("Failed to load scheme: %v\n", err)
+		os.Exit(1)
+	}
+
 	err = setupScheme(params)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"cpabe-prototype/VABE/bsw07"
-	"cpabe-prototype/VABE/bsw07/models"
+	"cpabe-prototype/VABE/waters11"
+	"cpabe-prototype/VABE/waters11/models"
 	"cpabe-prototype/pkg/utilities"
 	"flag"
 	"fmt"
@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	scheme *bsw07.BSW07S
+	scheme *waters11.Waters11
+	err    error
 )
 
 var ensureDir = utilities.EnsureDir
@@ -89,13 +90,6 @@ func generateKey(params KeyGenParams) error {
 		return fmt.Errorf("failed to create directory for private key proof: %v", err)
 	}
 
-	// Load the scheme
-	scheme, err = bsw07.LoadScheme(params.SchemePath)
-	scheme.Verbose = params.Verbose
-	if err != nil {
-		return fmt.Errorf("failed to load scheme: %v", err)
-	}
-
 	// Load the public key
 	publicKey, err := models.LoadPublicKey(params.PublicKeyPath)
 	if err != nil {
@@ -148,7 +142,15 @@ func generateKey(params KeyGenParams) error {
 func main() {
 	params := parseArgs()
 
-	err := generateKey(params)
+	// Load the scheme
+	scheme, err = waters11.LoadScheme(params.SchemePath)
+	scheme.Verbose = params.Verbose
+	if err != nil {
+		fmt.Printf("Failed to load scheme: %v\n", err)
+		os.Exit(1)
+	}
+
+	err = generateKey(params)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)

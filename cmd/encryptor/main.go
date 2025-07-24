@@ -2,14 +2,19 @@ package main
 
 import (
 	access_policy "cpabe-prototype/VABE/access-policy"
-	"cpabe-prototype/VABE/bsw07"
-	"cpabe-prototype/VABE/bsw07/models"
+	"cpabe-prototype/VABE/waters11"
+	"cpabe-prototype/VABE/waters11/models"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/mcuadros/go-defaults"
+)
+
+var (
+	scheme *waters11.Waters11
+	err    error
 )
 
 type EncryptParams struct {
@@ -86,13 +91,6 @@ func encryptFile(params EncryptParams) error {
 		return fmt.Errorf("failed to create directory for ciphertext proof: %v", err)
 	}
 
-	// Load the scheme
-	scheme, err := bsw07.LoadScheme(params.SchemePath)
-	scheme.Verbose = params.Verbose
-	if err != nil {
-		return fmt.Errorf("failed to load scheme: %v", err)
-	}
-
 	// Load the public key
 	publicKey, err := models.LoadPublicKey(params.PublicKeyPath)
 	if err != nil {
@@ -150,7 +148,15 @@ func encryptFile(params EncryptParams) error {
 func main() {
 	params := parseArgs()
 
-	err := encryptFile(params)
+	// Load the scheme
+	scheme, err = waters11.LoadScheme(params.SchemePath)
+	scheme.Verbose = params.Verbose
+	if err != nil {
+		fmt.Printf("Failed to load scheme: %v\n", err)
+		os.Exit(1)
+	}
+
+	err = encryptFile(params)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
