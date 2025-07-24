@@ -16,7 +16,7 @@ var (
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("======= Help =======")
-		fmt.Println("Usage: cpabe <operation>")
+		fmt.Println("Usage: go run main.go <operation>")
 		fmt.Println("Available operations: setup, keygen, encrypt, decrypt, verify_key, verify_ciphertext, full_flow")
 		fmt.Println("====================")
 		return

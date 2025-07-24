@@ -32,53 +32,6 @@ func generateAttribute(prefix string, i int) string {
 	return fmt.Sprintf("%s_%d", prefix, i)
 }
 
-//// Generate a random policy string with the given number of attributes
-//func generatePolicyString(numAttrs int) string {
-//	if numAttrs <= 0 {
-//		return ""
-//	}
-//
-//	rand.Seed(time.Now().UnixNano())
-//
-//	attributes := make([]string, numAttrs)
-//	for i := 0; i < numAttrs; i++ {
-//		attributes[i] = generateAttribute("attr", i+1)
-//	}
-//
-//	return generatePolicyExpr(attributes, 0, numAttrs, 0)
-//}
-//
-//// Generate a policy expression recursively
-//func generatePolicyExpr(attrs []string, start, end, depth int) string {
-//	if end-start <= 0 {
-//		return ""
-//	}
-//
-//	if end-start == 1 || depth >= maxDepth {
-//		return attrs[start]
-//	}
-//
-//	// With some probability, just return a single attribute
-//	if rand.Float32() < 0.3 && depth > 0 {
-//		return attrs[start+rand.Intn(end-start)]
-//	}
-//
-//	// Otherwise, create a composite expression
-//	splitPoint := start + rand.Intn(end-start-1) + 1
-//	leftExpr := generatePolicyExpr(attrs, start, splitPoint, depth+1)
-//	rightExpr := generatePolicyExpr(attrs, splitPoint, end, depth+1)
-//
-//	// Choose operator
-//	var op string
-//	if rand.Float32() < 0.5 {
-//		op = "and"
-//	} else {
-//		op = "or"
-//	}
-//
-//	return fmt.Sprintf("(%s %s %s)", leftExpr, op, rightExpr)
-//}
-
 // Generate a random policy string with the given number of attributes
 func generatePolicyString(numAttrs int) string {
 	if numAttrs <= 0 {
@@ -202,6 +155,12 @@ func generateTest(config TestConfig) error {
 		return fmt.Errorf("failed to create test directory: %w", err)
 	}
 
+	// if have file benchmark_results.json in testDir then pass
+	if _, err := os.Stat(filepath.Join(testDir, "benchmark_results.json")); !os.IsNotExist(err) {
+		fmt.Printf("Skipping test generation for %d attributes, results already exist\n", config.maxAttributes)
+		return nil
+	}
+
 	// Generate policy string
 	policyString := generatePolicyString(config.maxAttributes)
 	policyPath := filepath.Join(testDir, "access_policy_string")
@@ -274,7 +233,14 @@ func main() {
 	}
 
 	// Sizes to generate
-	sizes := []int{100, 1000, 10000, 100000, 1000000, 10000000}
+	sizes := []int{10, 20, 50, 100, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000}
+	size, err := readSizesFromFile(filepath.Join(*outputDir, "test_info.json"))
+	if err == nil {
+		sizes = size
+		fmt.Printf("Using sizes from file: %v\n", sizes)
+	} else {
+		fmt.Printf("Using default sizes: %v\n", sizes)
+	}
 
 	for _, size := range sizes {
 		fmt.Printf("\n=== Generating test with %d attributes ===\n", size)
@@ -293,4 +259,27 @@ func main() {
 	}
 
 	fmt.Println("Test generation complete!")
+}
+
+func readSizesFromFile(path string) (sizes []int, err error) {
+	//	{
+	//  "sizes": [10, 20, 50, 100, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000],
+	//}
+
+	fileJSON, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read sizes file: %w", err)
+	}
+	var data struct {
+		Sizes []int `json:"sizes"`
+	}
+	if err := json.Unmarshal(fileJSON, &data); err != nil {
+		return nil, fmt.Errorf("failed to parse sizes JSON: %w", err)
+	}
+	sizes = data.Sizes
+	if len(sizes) == 0 {
+		return nil, fmt.Errorf("no sizes found in file %s", path)
+	}
+	fmt.Printf("Read sizes from %s: %v\n", path, sizes)
+	return sizes, nil
 }

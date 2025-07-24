@@ -91,6 +91,7 @@ function show_help {
   echo "  decrypt [args]            - Run decryption with optional arguments"
   echo "  verify-key [args]         - Verify key with optional arguments"
   echo "  verify-ciphertext [args]  - Verify ciphertext with optional arguments"
+  echo "  gen-tests [args]          - Generate tests with optional arguments"
   echo "  all                       - Run full demo flow"
   echo "  clean                     - Clean build artifacts"
   echo "  help                      - Show this help message"
@@ -143,6 +144,28 @@ case "$1" in
     shift
     "$BINDIR/decryptor" --mode=verify-ciphertext "$@"
     ;;
+  "gen-tests")
+      check_build
+      go build -o "$BINDIR/gen_test" cmd/gen_test/main.go
+      if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to build gen_test${NC}"
+        exit 1
+      fi
+      "$BINDIR/gen_test" "$@"
+      ;;
+  "benchmark")
+      check_build
+      shift
+      mkdir -p cmd/benchmark
+      go build -o "$BINDIR/benchmark" cmd/benchmark/main.go
+      if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to build benchmark tool${NC}"
+        exit 1
+      fi
+      # Default to using test_info.json in the in/tests directory if no argument is provided
+      test_info="${1:-in/tests/test_info.json}"
+      "$BINDIR/benchmark" "$test_info"
+      ;;
 
   "all")
     run_all
