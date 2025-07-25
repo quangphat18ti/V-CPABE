@@ -1,0 +1,5 @@
+Operation,Complexity_Class,Power_Exponent,R_Squared
+KeyGen,O(n) - Linear,0.8105173533223791,0.9492950126617214
+VerifyKey,O(n) - Linear,0.9577650873453677,0.995598508640498
+Encrypt,O(n) - Linear,0.9856249300346709,0.9989076470361034
+VerifyCiphertext,O(n) - Linear,0.9960632948872261,0.9999256645118996
