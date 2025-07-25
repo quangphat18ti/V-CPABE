@@ -7,9 +7,10 @@ import (
 	"cpabe-prototype/VABE/waters11/models"
 	"flag"
 	"fmt"
-	"github.com/mcuadros/go-defaults"
 	"os"
 	"path/filepath"
+
+	"github.com/mcuadros/go-defaults"
 )
 
 var (
@@ -18,7 +19,7 @@ var (
 )
 
 type SchemeSetupParams struct {
-	SchemePath string `default:"in/schemes/bsw07_scheme.json"`
+	SchemePath string `default:"in/schemes/scheme.json"`
 	Salt       []byte `default:"default_salt"`
 	Verbose    bool   `default:"false"`
 
@@ -29,7 +30,7 @@ type SchemeSetupParams struct {
 func parseArgs() SchemeSetupParams {
 	var params SchemeSetupParams
 
-	schemePath := flag.String("scheme-path", "in/schemes/bsw07_scheme.json", "Path to save/load the scheme file")
+	schemePath := flag.String("scheme-path", "in/schemes/scheme.json", "Path to save/load the scheme file")
 	saltStr := flag.String("salt", "default_salt", "Salt value for hashing")
 	verbose := flag.Bool("verbose", false, "Enable verbose output")
 	publicKeyPath := flag.String("public-key-path", "out/utils/public_key", "Path to save the public key")

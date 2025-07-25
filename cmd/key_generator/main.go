@@ -19,7 +19,7 @@ var (
 var ensureDir = utilities.EnsureDir
 
 type KeyGenParams struct {
-	SchemePath          string `default:"in/schemes/bsw07_scheme.json"`
+	SchemePath          string `default:"in/schemes/scheme.json"`
 	PublicKeyPath       string `default:"out/utils/public_key"`
 	MasterSecretKeyPath string `default:"out/utils/master_secret_key"`
 
@@ -33,7 +33,7 @@ func parseArgs() KeyGenParams {
 	var params KeyGenParams
 
 	// Define command line flags
-	schemePath := flag.String("scheme-path", "in/schemes/bsw07_scheme.json", "Path to save/load the scheme file")
+	schemePath := flag.String("scheme-path", "in/schemes/scheme.json", "Path to save/load the scheme file")
 	publicKeyPath := flag.String("public-key-path", "out/utils/public_key", "Path to save the public key")
 	masterSecretKeyPath := flag.String("master-secret-key-path", "out/utils/master_secret_key", "Path to save the master secret key")
 

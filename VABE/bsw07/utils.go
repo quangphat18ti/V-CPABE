@@ -14,12 +14,13 @@ import (
 	"strings"
 )
 
-func accesPolicyToAccessTree(policy *AccessPolicy, index int) *models.Node {
+func accesPolicyToAccessTree(policy *AccessPolicy, index *int) *models.Node {
 	if policy.NodeType == LeafNodeType {
+		*index++
 		return &models.Node{
 			Type:      LeafNodeType,
 			Attribute: policy.Attribute,
-			Index:     index,
+			Index:     *index,
 			IsLeaf:    true,
 			Threshold: 1,
 		}
@@ -27,7 +28,7 @@ func accesPolicyToAccessTree(policy *AccessPolicy, index int) *models.Node {
 
 	children := make([]*models.Node, len(policy.Children))
 	for i, child := range policy.Children {
-		children[i] = accesPolicyToAccessTree(child, i+1)
+		children[i] = accesPolicyToAccessTree(child, index)
 	}
 
 	threshold := 1
@@ -35,10 +36,11 @@ func accesPolicyToAccessTree(policy *AccessPolicy, index int) *models.Node {
 		threshold = len(children)
 	}
 
+	*index++
 	return &models.Node{
 		Type:      policy.NodeType,
 		Children:  children,
-		Index:     index,
+		Index:     *index,
 		Threshold: threshold,
 	}
 }

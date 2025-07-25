@@ -123,7 +123,8 @@ func (scheme *BSW07S) runDecryptRecursively(node *models.Node, key *models.Secre
 }
 
 func (scheme *BSW07S) recoverAccessTreeFromCiphertext(ciphertext models.Ciphertext) (*models.Node, error) {
-	rootNode := accesPolicyToAccessTree(&ciphertext.Policy, 1)
+	index := 0
+	rootNode := accesPolicyToAccessTree(&ciphertext.Policy, &index)
 	if rootNode == nil {
 		return nil, fmt.Errorf("failed to convert access policy to tree")
 	}

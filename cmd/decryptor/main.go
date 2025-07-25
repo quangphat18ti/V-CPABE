@@ -19,7 +19,7 @@ var (
 )
 
 type DecryptParams struct {
-	SchemePath    string `default:"in/schemes/bsw07_scheme.json"`
+	SchemePath    string `default:"in/schemes/scheme.json"`
 	PublicKeyPath string `default:"out/utils/public_key"`
 
 	UserPrivateKeyPath  string `default:"out/keys/private_key"`
@@ -39,7 +39,7 @@ func parseArgs() DecryptParams {
 	var params DecryptParams
 
 	// Define command line flags
-	schemePath := flag.String("scheme-path", "in/schemes/bsw07_scheme.json", "Path to the scheme file")
+	schemePath := flag.String("scheme-path", "in/schemes/scheme.json", "Path to the scheme file")
 	publicKeyPath := flag.String("public-key-path", "out/utils/public_key", "Path to the public key")
 
 	privateKeyPath := flag.String("private-key-path", "out/keys/private_key", "Path to the user's private key")

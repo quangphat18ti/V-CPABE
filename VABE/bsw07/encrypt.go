@@ -48,7 +48,8 @@ func (scheme *BSW07S) Encrypt(pk models.PublicKey, msg []byte, policy AccessPoli
 		return nil, nil, err
 	}
 
-	rootNode := accesPolicyToAccessTree(&policy, 1)
+	index := 0
+	rootNode := accesPolicyToAccessTree(&policy, &index)
 	if rootNode == nil {
 		return nil, nil, fmt.Errorf("failed to convert access policy to tree")
 	}

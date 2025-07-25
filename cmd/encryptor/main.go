@@ -18,7 +18,7 @@ var (
 )
 
 type EncryptParams struct {
-	SchemePath    string `default:"in/schemes/bsw07_scheme.json"`
+	SchemePath    string `default:"in/schemes/scheme.json"`
 	PublicKeyPath string `default:"out/utils/public_key"`
 
 	AccessPolicyPath    string `default:"in/utils/access_policy"`
@@ -33,7 +33,7 @@ func parseArgs() EncryptParams {
 	var params EncryptParams
 
 	// Define command line flags
-	schemePath := flag.String("scheme-path", "in/schemes/bsw07_scheme.json", "Path to the scheme file")
+	schemePath := flag.String("scheme-path", "in/schemes/scheme.json", "Path to the scheme file")
 	publicKeyPath := flag.String("public-key-path", "out/utils/public_key", "Path to the public key")
 
 	accessPolicyPath := flag.String("access-policy-path", "in/utils/access_policy", "Path to the access policy file")
